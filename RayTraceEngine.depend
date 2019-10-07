@@ -1,0 +1,88 @@
+# depslib dependency file v1.0
+1570441607 source:/home/daan/projects/RayTraceEngine/main.cpp
+	<iostream>
+	<glad/glad.h>
+	<GLFW/glfw3.h>
+
+1570448718 source:/home/daan/projects/RayTraceEngine/src/glad.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<glad/glad.h>
+	<windows.h>
+	<winapifamily.h>
+	<dlfcn.h>
+
+1570448718 /home/daan/projects/RayTraceEngine/include/glad/glad.h
+	<KHR/khrplatform.h>
+
+1570448718 /home/daan/projects/RayTraceEngine/include/KHR/khrplatform.h
+	<stdint.h>
+	<inttypes.h>
+	<stdint.h>
+
+1570445357 source:/home/daan/projects/RayTraceEngine/raytraceengine.cpp
+	<iostream>
+	<glad/glad.h>
+	<GLFW/glfw3.h>
+	"raytraceengine.h"
+	"rtwindow.h"
+
+1570459600 /home/daan/projects/RayTraceEngine/include/raytraceengine.h
+	<glad/glad.h>
+	<GLFW/glfw3.h>
+	"raytracecontext.h"
+	"rtwindow.h"
+	"mesh.h"
+
+1570459729 /home/daan/projects/RayTraceEngine/include/rtwindow.h
+	<glad/glad.h>
+	<GLFW/glfw3.h>
+
+1570461693 source:/home/daan/projects/RayTraceEngine/src/raytraceengine.cpp
+	<iostream>
+	"raytraceengine.h"
+	"rtwindow.h"
+	"raytracecontext.h"
+
+1570468300 source:/home/daan/projects/RayTraceEngine/src/mesh.cpp
+	"mesh.h"
+
+1570468261 /home/daan/projects/RayTraceEngine/include/mesh.h
+	<vector>
+	<stdint.h>
+	"raytracecontext.h"
+
+1570453746 /home/daan/projects/RayTraceEngine/include/world.h
+	<vector>
+	"mesh.h"
+
+1570453813 source:/home/daan/projects/RayTraceEngine/src/world.cpp
+	<iostream>
+	"world.h"
+	<string>
+	<glad/glad.h>
+	<GLFW/glfw3.h>
+
+1570459729 source:/home/daan/projects/RayTraceEngine/include/rtwindow.h
+	<glad/glad.h>
+	<GLFW/glfw3.h>
+
+1570468351 source:/home/daan/projects/RayTraceEngine/src/raytracecontext.cpp
+	<iostream>
+	"raytracecontext.h"
+	<string>
+	<glad/glad.h>
+	<GLFW/glfw3.h>
+	"mesh.h"
+	"vertexshader.glsl"
+	"fragmentshader.glsl"
+
+1570468200 /home/daan/projects/RayTraceEngine/include/raytracecontext.h
+	"rtwindow.h"
+	<vector>
+
+1570468606 /home/daan/projects/RayTraceEngine/src/vertexshader.glsl
+
+1570469076 /home/daan/projects/RayTraceEngine/src/fragmentshader.glsl
+
