@@ -5,6 +5,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "mesh.h"
+#include <cstring>
 
 using namespace RT;
 
@@ -98,6 +99,41 @@ void RayTraceContext::init()
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
+
+
+
+
+    // Create triangle buffer
+    glGenBuffers(1, &triangle_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangle_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Triangle) * triangles.size(), triangles.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, triangle_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // Create Treenode buffer
+    glGenBuffers(1, &treenode_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, treenode_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Tree) * aabbtree.size(), triangles.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, treenode_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
+
+}
+
+void RayTraceContext::updateGPUTriangles(int b, int e) {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangle_ssbo);
+    GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    memcpy(p, triangles.data(), sizeof(Triangle) * triangles.size());
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+}
+
+void RayTraceContext::updateGPUTreenodes(int b, int e) {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, treenode_ssbo);
+    GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    memcpy(p, aabbtree.data(), sizeof(Tree) * aabbtree.size());
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
 Mesh* RayTraceContext::createMesh() {
@@ -106,6 +142,27 @@ Mesh* RayTraceContext::createMesh() {
 
 
     return &meshes.back();
+}
+
+int RayTraceContext::addTriangles(std::vector<Triangle>* triangles) {
+    this->triangles.insert(this->triangles.end(), triangles->begin(), triangles->end());
+    return this->triangles.size() - triangles->size();
+}
+
+int RayTraceContext::addNode(std::vector<Tree>* nodes) {
+    this->aabbtree.insert(this->aabbtree.end(), nodes->begin(), nodes->end());
+
+    std::cout << "added " << nodes->size() << " nodes to the scene\n";
+    return this->aabbtree.size() - nodes->size();
+
+}
+
+void RayTraceContext::removeTriangles(int tbegin, int tend) {
+
+}
+
+std::vector<Triangle>* RayTraceContext::getTriangles() {
+    return &this->triangles;
 }
 
 void RayTraceContext::draw(Window* window) {

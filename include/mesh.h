@@ -4,6 +4,7 @@
 #include <vector>
 #include <stdint.h>
 #include "raytracecontext.h"
+#include "tree.h"
 
 namespace RT
 {
@@ -11,13 +12,20 @@ class Mesh
 {
     public:
         Mesh(RayTraceContext* rtcontext);
-        void setTriangles(uint8_t* triangles);
+        void setVertices(float* vertices, int length);
+        void setTriangles(std::vector<Triangle>* triangles);
+        void build();
         void update();
 
     protected:
 
     private:
-        uint8_t* triangles;
+        // Location in the rtcontext triangle of where our block starts.
+        int tbegin;
+        int tend;
+
+        Tree* aabbtree;
+
         RayTraceContext* rtcontext;
 
 };

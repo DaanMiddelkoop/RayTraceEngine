@@ -13,6 +13,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add directory="include" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
@@ -22,6 +23,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -29,13 +31,15 @@
 			</Target>
 			<Target title="library">
 				<Option output="RayTraceEngine" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="" />
 				<Option type="3" />
 				<Option compiler="gcc" />
+				<Option host_application="/home/daan/projects/SpaceGame/bin/Debug/SpaceGame" />
+				<Option run_host_application_in_terminal="1" />
 				<Option createDefFile="1" />
 				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-fPIC" />
+					<Add directory="include" />
 				</Compiler>
 			</Target>
 		</Build>
@@ -55,13 +59,25 @@
 			<Add directory="src" />
 		</Linker>
 		<Unit filename="include/KHR/khrplatform.h" />
+		<Unit filename="include/Triangle.h" />
 		<Unit filename="include/glad/glad.h" />
+		<Unit filename="include/mesh.h" />
+		<Unit filename="include/raytracecontext.h" />
 		<Unit filename="include/raytraceengine.h" />
+		<Unit filename="include/rtobject.h" />
 		<Unit filename="include/rtwindow.h" />
+		<Unit filename="include/tree.h" />
+		<Unit filename="src/Triangle.cpp" />
+		<Unit filename="src/fragmentshader.glsl" />
 		<Unit filename="src/glad.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/mesh.cpp" />
+		<Unit filename="src/raytracecontext.cpp" />
 		<Unit filename="src/raytraceengine.cpp" />
+		<Unit filename="src/rtobject.cpp" />
+		<Unit filename="src/tree.cpp" />
+		<Unit filename="src/vertexshader.glsl" />
 		<Extensions>
 			<code_completion />
 			<debugger />
