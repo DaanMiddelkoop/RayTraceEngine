@@ -9,32 +9,33 @@ using namespace std;
 
 class Tree {
 public:
-
-    Tree();
-
-
-    bool leaf;
-    int node1;
-    int leaf_id;
-    int node2;
-    int parent;
-
     float minx;
     float miny;
     float minz;
+    int parent;
 
     float maxx;
     float maxy;
     float maxz;
+    int leaf;
 
     float offsetx;
     float offsety;
     float offsetz;
+    int leaf_id;
 
     float rotatex;
     float rotatey;
     float rotatez;
+    int node1;
 
+    int node2;
+    float padding0;
+    float padding1;
+    float padding2;
+
+
+    Tree();
     void insertNode(std::vector<Tree>* nodes, int parent, Tree node);
     void extendNode(Tree node);
     float areaMetric(Tree node);

@@ -54,6 +54,7 @@ void Mesh::build() {
 
 
     Tree root = Tree();
+    root.setBoundaries(&rtcontext->getTriangles()->at(0));
     nodes.push_back(root);
     for (int i = tbegin; i < tend; i++) {
         Tree node = Tree();

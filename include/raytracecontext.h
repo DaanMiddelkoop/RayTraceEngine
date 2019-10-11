@@ -29,11 +29,24 @@ namespace RT {
 
             std::vector<Triangle>*  getTriangles();
 
-            // Refresh this part of the triangles to the gpu.
-            void updateGPUTriangles(int b, int e);
+            // Refresh the triangles to gpu in case of resize.
+            void updateGPUTriangles();
 
-            // Refresh this part of the aabb tree to the gpu.
-            void updateGPUTreenodes(int b, int e);
+            // Refresh the treenodes to gpu in case of resize.
+            void updateGPUTreenodes();
+
+            // Update part of triangles on gpu
+            void updateGPUTrianglesPartial(int b, int e);
+
+            // Update part of treenodes on gpu.
+            void updateGPUTreenodesPartial(int b, int e);
+
+            // Set the position of the camera in the scene.
+            void setCameraPosition(float x, float y, float z);
+
+            // Set the direction of the camera in the scene.
+            void setCameraDirection(float x, float y, float z);
+
 
 
         protected:
@@ -47,6 +60,11 @@ namespace RT {
 
             GLuint triangle_ssbo;
             GLuint treenode_ssbo;
+
+            GLuint eye;
+            GLuint eye_dir;
+
+            GLuint screen_size;
     };
 }
 

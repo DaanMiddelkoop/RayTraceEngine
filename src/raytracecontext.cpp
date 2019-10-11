@@ -113,26 +113,57 @@ void RayTraceContext::init()
     // Create Treenode buffer
     glGenBuffers(1, &treenode_ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, treenode_ssbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Tree) * aabbtree.size(), triangles.data(), GL_DYNAMIC_COPY);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Tree) * aabbtree.size(), aabbtree.data(), GL_DYNAMIC_COPY);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, treenode_ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
 
+    // Set camera buffers;
+    eye = glGetUniformLocation(shaderProgram, "eye");
+    eye_dir = glGetUniformLocation(shaderProgram, "eye_dir");
+
+    screen_size = glGetUniformLocation(shaderProgram, "size");
+
+
 
 }
 
-void RayTraceContext::updateGPUTriangles(int b, int e) {
+void RayTraceContext::updateGPUTriangles() {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangle_ssbo);
+    //GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    //memcpy(p, triangles.data(), sizeof(Triangle) * triangles.size());
+    //glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Triangle) * triangles.size(), triangles.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, triangle_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+}
+
+void RayTraceContext::updateGPUTreenodes() {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, treenode_ssbo);
+    //GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    //memcpy(p, aabbtree.data(), sizeof(Tree) * aabbtree.size());
+    //glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    std::cout << "Storing " << sizeof(Tree) * aabbtree.size() << " treenode bytes\n";
+
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Tree) * aabbtree.size(), aabbtree.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, treenode_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void RayTraceContext::updateGPUTrianglesPartial(int b, int e) {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangle_ssbo);
     GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    memcpy(p, triangles.data(), sizeof(Triangle) * triangles.size());
+    memcpy(p, triangles.data() + b, sizeof(Triangle) * (e - b));
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
 }
 
-void RayTraceContext::updateGPUTreenodes(int b, int e) {
+void RayTraceContext::updateGPUTreenodesPartial(int b, int e) {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, treenode_ssbo);
     GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    memcpy(p, aabbtree.data(), sizeof(Tree) * aabbtree.size());
+    memcpy(p, aabbtree.data() + b, sizeof(Tree) * (e - b));
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 }
 
@@ -152,9 +183,14 @@ int RayTraceContext::addTriangles(std::vector<Triangle>* triangles) {
 int RayTraceContext::addNode(std::vector<Tree>* nodes) {
     this->aabbtree.insert(this->aabbtree.end(), nodes->begin(), nodes->end());
 
-    std::cout << "added " << nodes->size() << " nodes to the scene\n";
-    return this->aabbtree.size() - nodes->size();
+    std::cout << "node 0: " << aabbtree[0].minx << ", " << aabbtree[0].miny << ", " << aabbtree[0].minz << " - " << aabbtree[0].maxx << ", " << aabbtree[0].maxy << ", " << aabbtree[0].maxz << "\n";
+    updateGPUTreenodes();
+    updateGPUTriangles();
 
+    std::cout << "size of tree class: " << sizeof(Tree) << "\n";
+
+
+    return this->aabbtree.size() - nodes->size();
 }
 
 void RayTraceContext::removeTriangles(int tbegin, int tend) {
@@ -165,7 +201,18 @@ std::vector<Triangle>* RayTraceContext::getTriangles() {
     return &this->triangles;
 }
 
+void RayTraceContext::setCameraPosition(float x, float y, float z) {
+    glUniform3f(eye, x, y, z);
+}
+
+void RayTraceContext::setCameraDirection(float x, float y, float z) {
+    glUniform3f(eye_dir, x, y, z);
+}
+
 void RayTraceContext::draw(Window* window) {
+    int width, height;
+    glfwGetWindowSize(window->glwindow, &width, &height);
+    glUniform2i(screen_size, width, height);
 
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);

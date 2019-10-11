@@ -96,9 +96,18 @@ void Tree::setBoundaries(Triangle* t) {
     maxx = max(t->x1, max(t->x2, t->x3));
     maxy = max(t->y1, max(t->y2, t->y3));
     maxz = max(t->z1, max(t->z2, t->z3));
-    std::cout << t->x1 << "\n";
 
-    std::cout << getArea() << " whaaaat????\n";
+    if (maxx - minx < 0.00001f) {
+        maxx += 0.000001f;
+    }
+
+    if (maxy - miny < 0.00001f) {
+        maxy += 0.000001f;
+    }
+
+    if (maxz - minz < 0.00001f) {
+        maxz += 0.000001f;
+    }
 }
 
 float Tree::getArea() {
