@@ -181,9 +181,14 @@ int RayTraceContext::addTriangles(std::vector<Triangle>* triangles) {
 }
 
 int RayTraceContext::addNode(std::vector<Tree>* nodes) {
+    std::cout << "what now? \n";
+
+    this->aabbtree.reserve(this->aabbtree.size() + nodes->size());
     this->aabbtree.insert(this->aabbtree.end(), nodes->begin(), nodes->end());
 
     std::cout << "node 0: " << aabbtree[0].minx << ", " << aabbtree[0].miny << ", " << aabbtree[0].minz << " - " << aabbtree[0].maxx << ", " << aabbtree[0].maxy << ", " << aabbtree[0].maxz << "\n";
+
+    std::cout << "Start inserting to the gpu\n";
     updateGPUTreenodes();
     updateGPUTriangles();
 

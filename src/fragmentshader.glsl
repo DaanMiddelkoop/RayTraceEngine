@@ -54,9 +54,28 @@ vec4 trace(vec3 eye, vec3 dir) {
   return vec4(eye.xyz, 1.0f);
 }
 
-bool TriangleHit() {
+bool TriangleHit(Ray ray, Triangle tr, inout float t, inout float u, inout float v) {
+  vec3 v0v1 = tr.b - tr.a;
+  vec3 v0v2 = tr.c - tr.a;
+  vec3 pvec = cross(ray.dir, v0v2);
+  float det = dot(v0v1, pvec);
 
-  return false;
+  if (det < 0.000001 && det > -0.00001) {
+    return false;
+  }
+
+  float invDet = 1 / det;
+
+  vec3 tvec = ray.origin - tr.a;
+  u = dot(tvec, pvec) * invDet;
+  if (u < 0 || u > 1) return false;
+
+  vec3 qvec = cross(tvec, v0v1);
+  v = dot(ray.dir, qvec) * invDet;
+  if (v < 0 || u + v > 1) return false;
+
+  t = dot(v0v2, qvec) * invDet;
+  return true;
 }
 
 bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax, float tmin, float tmax) {
@@ -71,6 +90,56 @@ bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax, float tmin, float tmax) {
 	tmax = min(tmax, min(tbigger.x, min(tbigger.y, tbigger.z)));
 
 	return (tmin < tmax);
+}
+
+// Triangle hit, -1 for miss
+int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
+  int treenodes[1000];
+  int trianglenodes[1000];
+
+  int currentNode = 0;
+
+  treenodes[0] = 0;
+  int maxTreenodes = 1;
+  int maxTriangles = 0;
+
+  while (currentNode < maxTreenodes) {
+    if (AABBHit(ray, tree[treenodes[currentNode]].minpos, tree[treenodes[currentNode]].maxpos, 0, 784985795))
+    {
+      if (tree[treenodes[currentNode]].leaf == 1) {
+          trianglenodes[maxTriangles] = tree[treenodes[currentNode]].leaf_id;
+          maxTriangles += 1;
+          currentNode += 1;
+      }
+      else
+      {
+        treenodes[maxTreenodes] = tree[treenodes[currentNode]].node1;
+        treenodes[currentNode] = tree[treenodes[currentNode]].node2;
+        maxTreenodes += 1;
+      }
+    }
+    else
+    {
+      currentNode += 1;
+    }
+  }
+
+  currentNode = 0;
+  t = 9999999999.0;
+  int triangle_id = -1;
+
+  while (currentNode < maxTriangles) {
+    float new_t;
+    float new_u;
+    float new_v;
+    if (TriangleHit(ray, triangles[trianglenodes[currentNode]], new_t, new_u, new_v) && new_t < t) {
+      u = new_u;
+      v = new_v;
+      triangle_id = currentNode;
+    }
+    currentNode += 1;
+  }
+  return triangle_id;
 }
 
 vec3 trace(vec2 pos) {
@@ -94,9 +163,14 @@ void main()
     ray.origin = eye;
     ray.dir = dir;
 
+    float t;
+    float u;
+    float v;
+
     //FragColor = vec4(pos.x, pos.y, 0.0f, 1.0f);
-    if (AABBHit(ray, tree[0].minpos, tree[0].maxpos, 0.0f, 10000000.0f)) {
-      FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    int tr = traverseTree(ray, t, u, v);
+    if (tr >= 0) {
+      FragColor = vec4(1.0f, 0.0, 0.0f, 1.0f);
     } else {
       FragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     }

@@ -27,7 +27,6 @@ Tree::Tree() {
 }
 
 void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
-    std::cout << "executing insertNode on " << own_id << "\n";
 
     if (leaf) {
         if (leaf_id == -1) {
@@ -46,8 +45,6 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
             node.parent = own_id;
             nodes->push_back(node);
             node2 = nodes->size() - 1;
-
-            std::cout << "altered node1 and node2  of node " << own_id << "to: " << node1 << ", " << node2 << "\n";
         }
 
     extendNode(node);
