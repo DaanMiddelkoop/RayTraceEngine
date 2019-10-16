@@ -47,6 +47,8 @@ namespace RT {
             // Set the direction of the camera in the scene.
             void setCameraDirection(float x, float y, float z);
 
+            void setDebugInfo(float x, float y, float z);
+
 
 
         protected:
@@ -65,6 +67,7 @@ namespace RT {
             GLuint eye_dir;
 
             GLuint screen_size;
+            GLuint debug_info;
     };
 }
 

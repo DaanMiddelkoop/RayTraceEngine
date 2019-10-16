@@ -47,6 +47,7 @@ layout (std430, binding = 2) buffer tree_b
 
 uniform vec3 eye;
 uniform vec3 eye_dir;
+uniform vec3 debug;
 
 uniform ivec2 size;
 
@@ -94,33 +95,47 @@ bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax, float tmin, float tmax) {
 
 // Triangle hit, -1 for miss
 int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
-  int treenodes[1000];
-  int trianglenodes[1000];
+  int treenodes[600];
+  int trianglenodes[100];
 
   int currentNode = 0;
+  int maxTreenodes = 0;
 
-  treenodes[0] = 0;
-  int maxTreenodes = 1;
+  // manually check for hit with root.
+  if (AABBHit(ray, tree[0].minpos, tree[0].maxpos, 0, 200.0)) {
+    treenodes[0] = 0;
+    maxTreenodes = 1;
+  }
   int maxTriangles = 0;
 
   while (currentNode < maxTreenodes) {
-    if (AABBHit(ray, tree[treenodes[currentNode]].minpos, tree[treenodes[currentNode]].maxpos, 0, 784985795))
-    {
-      if (tree[treenodes[currentNode]].leaf == 1) {
-          trianglenodes[maxTriangles] = tree[treenodes[currentNode]].leaf_id;
-          maxTriangles += 1;
-          currentNode += 1;
-      }
-      else
-      {
-        treenodes[maxTreenodes] = tree[treenodes[currentNode]].node1;
-        treenodes[currentNode] = tree[treenodes[currentNode]].node2;
-        maxTreenodes += 1;
-      }
+    if (tree[treenodes[currentNode]].leaf == 1) {
+        trianglenodes[maxTriangles] = tree[treenodes[currentNode]].leaf_id;
+        maxTriangles += 1;
+        currentNode += 1;
     }
     else
     {
-      currentNode += 1;
+      bool hit1 = AABBHit(ray, tree[tree[treenodes[currentNode]].node1].minpos, tree[tree[treenodes[currentNode]].node1].maxpos, 0, 200);
+      bool hit2 = AABBHit(ray, tree[tree[treenodes[currentNode]].node2].minpos, tree[tree[treenodes[currentNode]].node2].maxpos, 0, 200);
+
+      if (hit1) {
+        treenodes[currentNode] = tree[treenodes[currentNode]].node1;
+        if (hit2) {
+          treenodes[maxTreenodes] = tree[treenodes[currentNode]].node2;
+          maxTreenodes += 1;
+        }
+      }
+      else
+      {
+        if (hit2) {
+          treenodes[currentNode] = tree[treenodes[currentNode]].node2;
+        }
+        else
+        {
+          currentNode += 1;
+        }
+      }
     }
   }
 
@@ -139,6 +154,8 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
     }
     currentNode += 1;
   }
+
+  //return maxTreenodes;
   return triangle_id;
 }
 
@@ -170,9 +187,9 @@ void main()
     //FragColor = vec4(pos.x, pos.y, 0.0f, 1.0f);
     int tr = traverseTree(ray, t, u, v);
     if (tr >= 0) {
-      FragColor = vec4(1.0f, 0.0, 0.0f, 1.0f);
+      FragColor = vec4(float(tr) / 4, 0.0, 0.0f, 1.0f);
     } else {
-      FragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+      FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
     }
     //FragColor = trace(eye, dir);
 }

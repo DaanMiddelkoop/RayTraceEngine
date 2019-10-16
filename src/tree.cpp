@@ -24,6 +24,8 @@ Tree::Tree() {
     rotatex = 0.0f;
     rotatey = 0.0f;
     rotatez = 0.0f;
+
+    depth = 0;
 }
 
 void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
@@ -35,9 +37,15 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
             leaf = false;
             // This node is a leaf, turn it into a node instead.
             Tree child1 = Tree();
+            child1.leaf = true;
             child1.leaf_id = leaf_id;
-            child1.extendNode(*this);
+            child1.copyBoundaries(this);
             child1.parent = own_id;
+            child1.depth = depth + 1;
+            node.depth = depth + 1;
+
+
+            leaf_id = 0;
 
             nodes->push_back(child1);
             node1 = nodes->size() - 1;
@@ -47,9 +55,9 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
             node2 = nodes->size() - 1;
         }
 
-    extendNode(node);
+         extendNode(node);
     } else {
-    extendNode(node);
+        extendNode(node);
         // Select which child the new node should be added to.
 
         float a1 = nodes->at(node1).areaMetric(node);
@@ -73,6 +81,14 @@ void Tree::extendNode(Tree node) {
     maxz = max(maxz, node.maxz);
 }
 
+float Tree::getSurface() {
+    float width = (maxx - minx) * (maxy - miny);
+    float length = (maxx - minx) * (maxz - minz);
+    float height = (maxy - miny) * (maxz - minz);
+
+    return 2.0f * ((width * height) + (width * length) + (length * height));
+}
+
 float Tree::areaMetric(Tree node) {
     float lx = min(minx, node.minx);
     float ly = min(miny, node.miny);
@@ -82,7 +98,16 @@ float Tree::areaMetric(Tree node) {
     float hy = max(maxy, node.maxy);
     float hz = max(maxz, node.maxz);
 
-    return (max(hx - lx, 0.0001f) * max(hy - ly, 0.0001f) * max(hz - lz, 0.0001f)) - (max(maxx - minx, 0.0001f) * max(maxy - miny, 0.0001f) * max(maxz - minz, 0.0001f));
+    // Return surface area;
+    float width = (hx - lx) * (hy - ly);
+    float length = (hx - lx) * (hz - lz);
+    float height = (hy - ly) * (hz - lz);
+
+    return (2.0f * ((width * height) + (width * length) + (length * height))) - getSurface();
+
+    //return max(hx - lx, 0.0001f) * max(hy - ly, 0.0001f) * max(hz - lz, 0.0001f);
+
+    //return (max(hx - lx, 0.0001f) * max(hy - ly, 0.0001f) * max(hz - lz, 0.0001f)) - (max(maxx - minx, 0.0001f) * max(maxy - miny, 0.0001f) * max(maxz - minz, 0.0001f));
 }
 
 void Tree::setBoundaries(Triangle* t) {
@@ -105,6 +130,16 @@ void Tree::setBoundaries(Triangle* t) {
     if (maxz - minz < 0.00001f) {
         maxz += 0.000001f;
     }
+}
+
+void Tree::copyBoundaries(Tree* tree) {
+    this->minx = tree->minx;
+    this->miny = tree->miny;
+    this->minz = tree->minz;
+
+    this->maxx = tree->maxx;
+    this->maxy = tree->maxy;
+    this->maxz = tree->maxz;
 }
 
 float Tree::getArea() {

@@ -124,6 +124,7 @@ void RayTraceContext::init()
 
     screen_size = glGetUniformLocation(shaderProgram, "size");
 
+    debug_info = glGetUniformLocation(shaderProgram, "debug");
 
 
 }
@@ -214,7 +215,12 @@ void RayTraceContext::setCameraDirection(float x, float y, float z) {
     glUniform3f(eye_dir, x, y, z);
 }
 
+void RayTraceContext::setDebugInfo(float x, float y, float z) {
+    glUniform3f(debug_info, x, y, z);
+}
+
 void RayTraceContext::draw(Window* window) {
+
     int width, height;
     glfwGetWindowSize(window->glwindow, &width, &height);
     glUniform2i(screen_size, width, height);

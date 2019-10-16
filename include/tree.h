@@ -30,7 +30,7 @@ public:
     int node1;
 
     int node2;
-    float padding0;
+    int depth;
     float padding1;
     float padding2;
 
@@ -41,6 +41,8 @@ public:
     float areaMetric(Tree node);
     void setBoundaries(Triangle* t);
     float getArea();
+    void copyBoundaries(Tree* tree);
+    float getSurface();
 };
 
 #endif

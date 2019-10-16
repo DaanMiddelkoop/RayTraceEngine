@@ -50,7 +50,7 @@ void Mesh::build() {
     // Remove all of the
 
     std::vector<Tree> nodes = std::vector<Tree>(0);
-    nodes.reserve((tend - tbegin) * 2);
+    nodes.reserve((tend - tbegin) * 5);
 
 
     Tree root = Tree();
@@ -70,7 +70,13 @@ void Mesh::build() {
 
     std::cout << "printing tree stuff\n";
     for (unsigned int a = 0; a < nodes.size(); a++) {
-        std::cout << a << ", " << nodes[a].node1 << ", " << nodes[a].node2 << ", " << nodes[a].leaf << ", " << nodes[a].leaf_id << ", " << nodes[a].getArea() * 1000000.f << "\n";
+        std::cout << a << ", " << nodes[a].node1 << ", " << nodes[a].node2 << ", " << nodes[a].leaf << ", " << nodes[a].leaf_id << ", " << nodes[a].getArea() * 1000000.f << ", depth: " << nodes[a].depth << "\n";
+    }
+
+    for (unsigned int a = 0; a < nodes.size(); a++) {
+        if (nodes[a].leaf) {
+            std::cout << a << " depth: " << nodes[a].leaf_id << "\n";
+        }
     }
 
 
