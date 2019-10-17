@@ -10,20 +10,23 @@ class Triangle
         float x1;
         float y1;
         float z1;
-
-        float empty1;
+        int material;
 
         float x2;
         float y2;
         float z2;
-
-        float empty2;
+        float u3;
 
         float x3;
         float y3;
         float z3;
+        float v3;
 
-        float empty3;
+        float u1;
+        float v1;
+        float u2;
+        float v2;
+
 
         float minx();
         float miny();

@@ -8,8 +8,18 @@ struct Light {
 
 struct Triangle {
   vec3 a;
+  int material;
+
   vec3 b;
+  float u3;
+
   vec3 c;
+  float v3;
+
+  float u1;
+  float v1;
+  float u2;
+  float v2;
 };
 
 struct Tree {
@@ -33,6 +43,20 @@ struct Ray {
   vec3 dir;
 };
 
+struct Material {
+  int texture_id;
+  float color_tint_red;
+  float color_tint_green;
+  float color_tint_blue;
+};
+
+struct Texture {
+  int width;
+  int height;
+  int pixel_pointer;
+  float padding1;
+};
+
 out vec4 FragColor;
 
 layout (std430, binding = 1) buffer triangle_b
@@ -45,14 +69,51 @@ layout (std430, binding = 2) buffer tree_b
   Tree tree[];
 };
 
+layout (std430, binding = 3) buffer material_b
+{
+  Material materials[];
+};
+
+layout (std430, binding = 4) buffer texture_b
+{
+  Texture textures[];
+};
+
+layout (std430, binding = 5) buffer pixel_b
+{
+  uint pixels[];
+};
+
 uniform vec3 eye;
 uniform vec3 eye_dir;
 uniform vec3 debug;
 
 uniform ivec2 size;
 
-vec4 trace(vec3 eye, vec3 dir) {
-  return vec4(eye.xyz, 1.0f);
+vec4 getTextureColor(int tr, float u, float v) {
+  Triangle t = triangles[tr];
+  Material mat = materials[t.material];
+  Texture tex = textures[mat.texture_id];
+
+  //return vec4(u, v, 0.0, 1.0);
+  int x = int((u * t.u1) + (v * t.u2) + ((1 - u - v) * t.u3));
+  int y = int((u * t.v1) + (v * t.v2) + ((1 - u - v) * t.v3));
+
+  //return vec4(float(pixels[tex.pixel_pointer] / 255), 0.0, 0.0, 1.0);
+
+  int pixel_loc = y * tex.width + x;
+
+  uint color = pixels[tex.pixel_pointer + pixel_loc];
+
+  //return vec4(float(tex.pixel_pointer + pixel_loc) / 255, float(0) / 255, float(tex.width) / 255, 1.0);
+
+
+  uint r = color & (0xFF << 24);
+  uint g = color & (0xFF << 16);
+  uint b = color & (0xFF << 8);
+  uint a = color & (0xFF);
+
+  return vec4(float(r) / 255, float(g) / 255, float(b) / (255), float(a) / (255));
 }
 
 bool TriangleHit(Ray ray, Triangle tr, inout float t, inout float u, inout float v) {
@@ -79,7 +140,7 @@ bool TriangleHit(Ray ray, Triangle tr, inout float t, inout float u, inout float
   return true;
 }
 
-bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax, float tmin, float tmax) {
+bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax) {
   vec3 invD = 1.0 / ray.dir;
 	vec3 t0s = (aabbmin - ray.origin) * invD;
 	vec3 t1s = (aabbmax - ray.origin) * invD;
@@ -87,10 +148,10 @@ bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax, float tmin, float tmax) {
 	vec3 tsmaller = min(t0s, t1s);
 	vec3 tbigger  = max(t0s, t1s);
 
-	tmin = max(tmin, max(tsmaller.x, max(tsmaller.y, tsmaller.z)));
-	tmax = min(tmax, min(tbigger.x, min(tbigger.y, tbigger.z)));
+	float tmin = max(tsmaller.x, max(tsmaller.y, tsmaller.z));
+	float tmax = min(tbigger.x, min(tbigger.y, tbigger.z));
 
-	return (tmin < tmax);
+	return (tmin <= tmax);
 }
 
 // Triangle hit, -1 for miss
@@ -102,7 +163,7 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
   int maxTreenodes = 0;
 
   // manually check for hit with root.
-  if (AABBHit(ray, tree[0].minpos, tree[0].maxpos, 0, 20000.0)) {
+  if (AABBHit(ray, tree[0].minpos, tree[0].maxpos)) {
     treenodes[0] = 0;
     maxTreenodes = 1;
   }
@@ -118,8 +179,8 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
     {
       int node1 = tree[treenodes[currentNode]].node1;
       int node2 = tree[treenodes[currentNode]].node2;
-      bool hit1 = AABBHit(ray, tree[node1].minpos, tree[node1].maxpos, 0, 20000);
-      bool hit2 = AABBHit(ray, tree[node2].minpos, tree[node2].maxpos, 0, 20000);
+      bool hit1 = AABBHit(ray, tree[node1].minpos, tree[node1].maxpos);
+      bool hit2 = AABBHit(ray, tree[node2].minpos, tree[node2].maxpos);
 
       if (hit1) {
         treenodes[currentNode] = node1;
@@ -152,7 +213,8 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
     if (TriangleHit(ray, triangles[trianglenodes[currentNode]], new_t, new_u, new_v) && new_t < t) {
       u = new_u;
       v = new_v;
-      triangle_id = currentNode;
+      t = new_t;
+      triangle_id = trianglenodes[currentNode];
     }
     currentNode += 1;
   }
@@ -161,8 +223,15 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
   return triangle_id;
 }
 
-vec3 trace(vec2 pos) {
-  return vec3(1, 0, 0);
+vec3 trace(Ray ray) {
+  float t, u, v;
+
+  int tr = traverseTree(ray, t, u, v);
+  if (tr == -1) {
+    return vec3(1, 1, 1);
+  }
+
+  return getTextureColor(tr, u, v).xyz;
 }
 
 void main()
@@ -171,7 +240,6 @@ void main()
 
     vec3 normal1 = -normalize(cross(eye_dir, vec3(0.0f, 1.0f, 0.0f))) * (size.x / gemsize);
     vec3 normal2 = normalize(cross(eye_dir, normal1)) * (size.y / gemsize);
-
 
     ivec2 pix = ivec2(gl_FragCoord.xy);
     vec2 pos = (vec2(pix) / vec2(size.x - 1, size.y - 1)) - vec2(0.5, 0.5);
@@ -182,17 +250,8 @@ void main()
     ray.origin = eye;
     ray.dir = dir;
 
-    float t;
-    float u;
-    float v;
-
     //FragColor = vec4(pos.x, pos.y, 0.0f, 1.0f);
-    int tr = traverseTree(ray, t, u, v);
-    if (tr >= 0) {
-      FragColor = vec4(float(tr) / 4, 0.0, 0.0f, 1.0f);
-    } else {
-      FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
-    }
-    //FragColor = trace(eye, dir);
+
+    FragColor = vec4(trace(ray).xyz, 1.0);
 }
 )""

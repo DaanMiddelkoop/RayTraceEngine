@@ -40,7 +40,6 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
             child1.copyBoundaries(this);
             child1.parent = own_id;
 
-
             leaf_id = 0;
 
             nodes->push_back(child1);
@@ -132,13 +131,6 @@ void Tree::balance(std::vector<Tree>* nodes) {
             nodes->at(node1).recalculateBoundingBox(nodes);
         }
     }
-
-
-
-
-
-
-
 }
 
 void Tree::extendNode(Tree node) {

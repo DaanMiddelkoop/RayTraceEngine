@@ -7,6 +7,7 @@ using namespace RT;
 Mesh::Mesh(RayTraceContext* rtcontext)
 {
     this->rtcontext = rtcontext;
+    this->material_id = -1;
 }
 
 void Mesh::setVertices(float* vertices, int length) {
@@ -30,7 +31,6 @@ void Mesh::setVertices(float* vertices, int length) {
         t.x3 = vs[6];
         t.y3 = vs[7];
         t.z3 = vs[8];
-
 
         ts.push_back(t);
     }
@@ -60,6 +60,10 @@ void Mesh::build() {
         if (i % 10000 == 0) {
             std::cout << "Insert node " << i << " out of " << (tend - tbegin) << "\n";
         }
+
+        // Update triangle material.
+        rtcontext->getTriangles()->at(i).material = material_id;
+
         Tree node = Tree();
         node.leaf_id = i;
         node.setBoundaries(&rtcontext->getTriangles()->at(i));
@@ -75,4 +79,9 @@ void Mesh::build() {
 
 void Mesh::update() {
     // Balance tree better
+}
+
+void Mesh::setMaterial(MaterialHandle* material) {
+    this->material_id = material->material_id;
+    std::cout << "material_id set: " << material_id << "\n";
 }

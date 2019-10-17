@@ -16,6 +16,7 @@ class Mesh
         void setTriangles(std::vector<Triangle>* triangles);
         void build();
         void update();
+        void setMaterial(MaterialHandle* material);
 
     protected:
 
@@ -23,6 +24,8 @@ class Mesh
         // Location in the rtcontext triangle of where our block starts.
         int tbegin;
         int tend;
+
+        int material_id;
 
         Tree* aabbtree;
 

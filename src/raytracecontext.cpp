@@ -117,6 +117,25 @@ void RayTraceContext::init()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, treenode_ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+    // Create Material buffer
+    glGenBuffers(1, &materials_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, materials_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Material) * materials.size(), materials.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, materials_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    glGenBuffers(1, &textures_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, textures_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Texture) * textures.size(), textures.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, textures_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    glGenBuffers(1, &pixels_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(unsigned int) * pixels.size(), pixels.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, pixels_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 
     // Set camera buffers;
     eye = glGetUniformLocation(shaderProgram, "eye");
@@ -131,10 +150,6 @@ void RayTraceContext::init()
 
 void RayTraceContext::updateGPUTriangles() {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangle_ssbo);
-    //GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    //memcpy(p, triangles.data(), sizeof(Triangle) * triangles.size());
-    //glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Triangle) * triangles.size(), triangles.data(), GL_DYNAMIC_COPY);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, triangle_ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -143,14 +158,31 @@ void RayTraceContext::updateGPUTriangles() {
 
 void RayTraceContext::updateGPUTreenodes() {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, treenode_ssbo);
-    //GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-    //memcpy(p, aabbtree.data(), sizeof(Tree) * aabbtree.size());
-    //glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-
-    std::cout << "Storing " << sizeof(Tree) * aabbtree.size() << " treenode bytes\n";
-
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Tree) * aabbtree.size(), aabbtree.data(), GL_DYNAMIC_COPY);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, treenode_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void RayTraceContext::updateGPUMaterials() {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, materials_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Material) * materials.size(), materials.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, materials_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void RayTraceContext::updateGPUTextures() {
+    std::cout << textures[0].width << ", " << textures[0].height << " TEXTURE DIMENSIONS!!!!\n";
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, textures_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Texture) * textures.size(), textures.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, textures_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void RayTraceContext::updateGPUPixels() {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(unsigned int) * pixels.size(), pixels.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, pixels_ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
@@ -176,24 +208,46 @@ Mesh* RayTraceContext::createMesh() {
     return &meshes.back();
 }
 
+MaterialHandle RayTraceContext::createMaterial() {
+    materials.push_back(Material());
+
+    return MaterialHandle(this, materials.size() - 1);
+}
+
+Material* RayTraceContext::getMaterial(int material_id) {
+    return &(materials[material_id]);
+}
+
+TextureHandle RayTraceContext::createTexture() {
+    textures.push_back(Texture());
+
+    return TextureHandle(this, textures.size() - 1);
+}
+
+Texture* RayTraceContext::getTexture(int texture_id) {
+    std::cout << "Retrieving texture id: " << texture_id;
+
+    return &(textures[texture_id]);
+}
+
+std::vector<unsigned int>* RayTraceContext::getPixels() {
+    return &pixels;
+}
+
 int RayTraceContext::addTriangles(std::vector<Triangle>* triangles) {
     this->triangles.insert(this->triangles.end(), triangles->begin(), triangles->end());
     return this->triangles.size() - triangles->size();
 }
 
 int RayTraceContext::addNode(std::vector<Tree>* nodes) {
-    std::cout << "what now? \n";
 
     this->aabbtree.reserve(this->aabbtree.size() + nodes->size());
     this->aabbtree.insert(this->aabbtree.end(), nodes->begin(), nodes->end());
 
     std::cout << "node 0: " << aabbtree[0].minx << ", " << aabbtree[0].miny << ", " << aabbtree[0].minz << " - " << aabbtree[0].maxx << ", " << aabbtree[0].maxy << ", " << aabbtree[0].maxz << "\n";
 
-    std::cout << "Start inserting to the gpu\n";
     updateGPUTreenodes();
     updateGPUTriangles();
-
-    std::cout << "size of tree class: " << sizeof(Tree) << "\n";
 
 
     return this->aabbtree.size() - nodes->size();

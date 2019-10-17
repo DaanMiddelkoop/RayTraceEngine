@@ -30,9 +30,9 @@ public:
     int node1;
 
     int node2;
-    int texture_id;
-    float u;
-    float v;
+    float padding1;
+    float padding2;
+    float padding3;
 
 
     Tree();

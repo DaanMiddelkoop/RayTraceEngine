@@ -5,9 +5,15 @@
 #include <vector>
 #include "Triangle.h"
 #include "tree.h"
+#include "texture.h"
+#include "material.h"
 
 namespace RT {
     class Mesh;
+    class Material;
+    class MaterialHandle;
+    class TextureHandle;
+    class Texture;
 
     class RayTraceContext
     {
@@ -15,7 +21,25 @@ namespace RT {
             RayTraceContext();
             void init();
 
+            // Create a mesh in the scene and give a reference to user.
             Mesh* createMesh();
+
+            // Create a new material in the scene and give a reference to user;
+            MaterialHandle createMaterial();
+
+            // Retrueve reference to raw material data;
+            Material* getMaterial(int material_id);
+
+            // Create a new texture.
+            TextureHandle createTexture();
+
+            // Retrieve reference to texture data;
+            Texture* getTexture(int texture_id);
+
+            // Retrieve reference to raw pixel data;
+            std::vector<unsigned int>* getPixels();
+
+
             void draw(RT::Window* window);
 
             // Returns the index at which it started placing triangles.
@@ -29,17 +53,28 @@ namespace RT {
 
             std::vector<Triangle>*  getTriangles();
 
+
             // Refresh the triangles to gpu in case of resize.
             void updateGPUTriangles();
 
             // Refresh the treenodes to gpu in case of resize.
             void updateGPUTreenodes();
 
+            // Update gpu materials.
+            void updateGPUMaterials();
+
+            // Refresh all textures on the gpu.
+            void updateGPUTextures();
+
+            // Refresh all pixels of textures on the gpu.
+            void updateGPUPixels();
+
             // Update part of triangles on gpu
             void updateGPUTrianglesPartial(int b, int e);
 
             // Update part of treenodes on gpu.
             void updateGPUTreenodesPartial(int b, int e);
+
 
             // Set the position of the camera in the scene.
             void setCameraPosition(float x, float y, float z);
@@ -57,11 +92,18 @@ namespace RT {
             std::vector<Mesh> meshes;
             std::vector<Triangle> triangles;
             std::vector<Tree> aabbtree;
+            std::vector<Material> materials;
+            std::vector<Texture> textures;
+            std::vector<unsigned int> pixels;
+
             unsigned int shaderProgram;
             unsigned int VBO, VAO;
 
             GLuint triangle_ssbo;
             GLuint treenode_ssbo;
+            GLuint materials_ssbo;
+            GLuint textures_ssbo;
+            GLuint pixels_ssbo;
 
             GLuint eye;
             GLuint eye_dir;

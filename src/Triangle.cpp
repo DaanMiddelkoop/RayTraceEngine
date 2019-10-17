@@ -6,7 +6,13 @@ using namespace std;
 
 Triangle::Triangle()
 {
-    //ctor
+    u1 = 0.0;
+    u2 = 1.0;
+    u3 = 2.0;
+
+    v1 = 0.0;
+    v2 = 2.0;
+    v3 = 0.0;
 }
 
 float Triangle::minx() {
