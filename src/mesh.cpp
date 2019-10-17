@@ -57,7 +57,9 @@ void Mesh::build() {
     root.setBoundaries(&rtcontext->getTriangles()->at(0));
     nodes.push_back(root);
     for (int i = tbegin; i < tend; i++) {
-        std::cout << "Insert node " << i << "\n";
+        if (i % 10000 == 0) {
+            std::cout << "Insert node " << i << " out of " << (tend - tbegin) << "\n";
+        }
         Tree node = Tree();
         node.leaf_id = i;
         node.setBoundaries(&rtcontext->getTriangles()->at(i));
@@ -67,18 +69,6 @@ void Mesh::build() {
         nodes[0].insertNode(&nodes, 0, node);
 
     }
-
-    std::cout << "printing tree stuff\n";
-    for (unsigned int a = 0; a < nodes.size(); a++) {
-        std::cout << a << ", " << nodes[a].node1 << ", " << nodes[a].node2 << ", " << nodes[a].leaf << ", " << nodes[a].leaf_id << ", " << nodes[a].getArea() * 1000000.f << ", depth: " << nodes[a].depth << "\n";
-    }
-
-    for (unsigned int a = 0; a < nodes.size(); a++) {
-        if (nodes[a].leaf) {
-            std::cout << a << " depth: " << nodes[a].leaf_id << "\n";
-        }
-    }
-
 
     rtcontext->addNode(&nodes);
 }

@@ -24,8 +24,6 @@ Tree::Tree() {
     rotatex = 0.0f;
     rotatey = 0.0f;
     rotatez = 0.0f;
-
-    depth = 0;
 }
 
 void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
@@ -41,8 +39,6 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
             child1.leaf_id = leaf_id;
             child1.copyBoundaries(this);
             child1.parent = own_id;
-            child1.depth = depth + 1;
-            node.depth = depth + 1;
 
 
             leaf_id = 0;
@@ -60,15 +56,89 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
         extendNode(node);
         // Select which child the new node should be added to.
 
-        float a1 = nodes->at(node1).areaMetric(node);
-        float a2 = nodes->at(node2).areaMetric(node);
+        float a1 = nodes->at(node1).areaMetric(&node);
+        float a2 = nodes->at(node2).areaMetric(&node);
+
 
         if (a1 < a2) {
             (*nodes)[node1].insertNode(nodes, node1, node);
         } else {
             (*nodes)[node2].insertNode(nodes, node2, node);
         }
+        balance(nodes);
     }
+}
+
+void Tree::balance(std::vector<Tree>* nodes) {
+    // Four possible rotations:
+    // http://box2d.org/files/GDC2019/ErinCatto_DynamicBVH_GDC2019.pdf rotations part
+
+    // Rotate b and f;
+    if (!nodes->at(node2).leaf) {
+
+        float SA1 = nodes->at(node2).getSurface();
+        float SA2 = nodes->at(node1).unionSurface(&(nodes->at(nodes->at(node2).node2)));
+
+        // Rotation condition
+        if (SA2 < SA1) {
+            int new_node1 = nodes->at(node2).node1;
+            nodes->at(node2).node1 = node1;
+            node1 = new_node1;
+            nodes->at(node2).recalculateBoundingBox(nodes);
+        }
+    }
+
+    // Rotate c and e
+    if (!nodes->at(node1).leaf) {
+
+        float SA1 = nodes->at(node1).getSurface();
+        float SA2 = nodes->at(node2).unionSurface(&(nodes->at(nodes->at(node1).node1)));
+
+        // Rotation condition
+        if (SA2 < SA1) {
+            int new_node2 = nodes->at(node1).node2;
+            nodes->at(node1).node2 = node2;
+            node2 = new_node2;
+            nodes->at(node1).recalculateBoundingBox(nodes);
+        }
+    }
+
+    // Rotate b and g;
+    if (!nodes->at(node2).leaf) {
+
+        float SA1 = nodes->at(node2).getSurface();
+        float SA2 = nodes->at(node1).unionSurface(&(nodes->at(nodes->at(node2).node1)));
+
+        // Rotation condition
+        if (SA2 < SA1) {
+            int new_node1 = nodes->at(node2).node2;
+            nodes->at(node2).node2 = node1;
+            node1 = new_node1;
+            nodes->at(node2).recalculateBoundingBox(nodes);
+        }
+    }
+
+    // Rotate c and d
+    if (!nodes->at(node1).leaf) {
+
+        float SA1 = nodes->at(node1).getSurface();
+        float SA2 = nodes->at(node2).unionSurface(&(nodes->at(nodes->at(node1).node2)));
+
+        // Rotation condition
+        if (SA2 < SA1) {
+            int new_node2 = nodes->at(node1).node1;
+            nodes->at(node1).node1 = node2;
+            node2 = new_node2;
+            nodes->at(node1).recalculateBoundingBox(nodes);
+        }
+    }
+
+
+
+
+
+
+
 }
 
 void Tree::extendNode(Tree node) {
@@ -89,21 +159,25 @@ float Tree::getSurface() {
     return 2.0f * ((width * height) + (width * length) + (length * height));
 }
 
-float Tree::areaMetric(Tree node) {
-    float lx = min(minx, node.minx);
-    float ly = min(miny, node.miny);
-    float lz = min(minz, node.minz);
+float Tree::unionSurface(Tree* node) {
+    float lx = min(minx, node->minx);
+    float ly = min(miny, node->miny);
+    float lz = min(minz, node->minz);
 
-    float hx = max(maxx, node.maxx);
-    float hy = max(maxy, node.maxy);
-    float hz = max(maxz, node.maxz);
+    float hx = max(maxx, node->maxx);
+    float hy = max(maxy, node->maxy);
+    float hz = max(maxz, node->maxz);
 
     // Return surface area;
     float width = (hx - lx) * (hy - ly);
     float length = (hx - lx) * (hz - lz);
     float height = (hy - ly) * (hz - lz);
 
-    return (2.0f * ((width * height) + (width * length) + (length * height))) - getSurface();
+    return (2.0f * ((width * height) + (width * length) + (length * height)));
+}
+
+float Tree::areaMetric(Tree* node) {
+    return unionSurface(node) - getSurface();
 
     //return max(hx - lx, 0.0001f) * max(hy - ly, 0.0001f) * max(hz - lz, 0.0001f);
 
@@ -130,6 +204,16 @@ void Tree::setBoundaries(Triangle* t) {
     if (maxz - minz < 0.00001f) {
         maxz += 0.000001f;
     }
+}
+
+void Tree::recalculateBoundingBox(std::vector<Tree>* nodes) {
+    minx = min(nodes->at(node1).minx, nodes->at(node2).minx);
+    miny = min(nodes->at(node1).miny, nodes->at(node2).miny);
+    minz = min(nodes->at(node1).minz, nodes->at(node2).minz);
+
+    maxx = max(nodes->at(node1).maxx, nodes->at(node2).maxx);
+    maxy = max(nodes->at(node1).maxy, nodes->at(node2).maxy);
+    maxz = max(nodes->at(node1).maxz, nodes->at(node2).maxz);
 }
 
 void Tree::copyBoundaries(Tree* tree) {

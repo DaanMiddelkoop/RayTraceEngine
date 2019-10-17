@@ -95,14 +95,14 @@ bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax, float tmin, float tmax) {
 
 // Triangle hit, -1 for miss
 int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
-  int treenodes[600];
-  int trianglenodes[100];
+  int treenodes[60];
+  int trianglenodes[10];
 
   int currentNode = 0;
   int maxTreenodes = 0;
 
   // manually check for hit with root.
-  if (AABBHit(ray, tree[0].minpos, tree[0].maxpos, 0, 200.0)) {
+  if (AABBHit(ray, tree[0].minpos, tree[0].maxpos, 0, 20000.0)) {
     treenodes[0] = 0;
     maxTreenodes = 1;
   }
@@ -116,20 +116,22 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
     }
     else
     {
-      bool hit1 = AABBHit(ray, tree[tree[treenodes[currentNode]].node1].minpos, tree[tree[treenodes[currentNode]].node1].maxpos, 0, 200);
-      bool hit2 = AABBHit(ray, tree[tree[treenodes[currentNode]].node2].minpos, tree[tree[treenodes[currentNode]].node2].maxpos, 0, 200);
+      int node1 = tree[treenodes[currentNode]].node1;
+      int node2 = tree[treenodes[currentNode]].node2;
+      bool hit1 = AABBHit(ray, tree[node1].minpos, tree[node1].maxpos, 0, 20000);
+      bool hit2 = AABBHit(ray, tree[node2].minpos, tree[node2].maxpos, 0, 20000);
 
       if (hit1) {
-        treenodes[currentNode] = tree[treenodes[currentNode]].node1;
+        treenodes[currentNode] = node1;
         if (hit2) {
-          treenodes[maxTreenodes] = tree[treenodes[currentNode]].node2;
+          treenodes[maxTreenodes] = node2;
           maxTreenodes += 1;
         }
       }
       else
       {
         if (hit2) {
-          treenodes[currentNode] = tree[treenodes[currentNode]].node2;
+          treenodes[currentNode] = node2;
         }
         else
         {

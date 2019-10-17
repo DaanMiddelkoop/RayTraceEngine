@@ -30,19 +30,23 @@ public:
     int node1;
 
     int node2;
-    int depth;
-    float padding1;
-    float padding2;
+    int texture_id;
+    float u;
+    float v;
 
 
     Tree();
     void insertNode(std::vector<Tree>* nodes, int parent, Tree node);
     void extendNode(Tree node);
-    float areaMetric(Tree node);
+    float areaMetric(Tree* node);
     void setBoundaries(Triangle* t);
     float getArea();
     void copyBoundaries(Tree* tree);
     float getSurface();
+
+    void balance(std::vector<Tree>* tree);
+    float unionSurface(Tree* node);
+    void recalculateBoundingBox(std::vector<Tree>* nodes);
 };
 
 #endif
