@@ -62,6 +62,7 @@
 		<Unit filename="include/Triangle.h" />
 		<Unit filename="include/glad/glad.h" />
 		<Unit filename="include/material.h" />
+		<Unit filename="include/matrix4x4.h" />
 		<Unit filename="include/mesh.h" />
 		<Unit filename="include/objloader.h" />
 		<Unit filename="include/pixeldata.h" />
@@ -78,6 +79,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/material.cpp" />
+		<Unit filename="src/matrix4x4.cpp" />
 		<Unit filename="src/mesh.cpp" />
 		<Unit filename="src/objloader.cpp" />
 		<Unit filename="src/pixeldata.cpp" />

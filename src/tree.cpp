@@ -8,6 +8,7 @@ Tree::Tree() {
     node1 = -1;
     node2 = -1;
     parent = -1;
+    depth = 0;
 
     minx = 0.0f;
     miny = 0.0f;
@@ -31,6 +32,8 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
             child1.leaf_id = leaf_id;
             child1.copyBoundaries(this);
             child1.parent = own_id;
+            child1.depth = depth + 1;
+            node.depth = depth + 1;
 
             leaf_id = 0;
 
@@ -58,6 +61,16 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
         }
         balance(nodes);
     }
+}
+
+void Tree::setDepths(std::vector<Tree>* nodes) {
+    if (parent != -1) {
+        depth = nodes->at(parent).depth + 1;
+    } else {
+        depth = 0;
+    }
+    nodes->at(node1).setDepths(nodes);
+    nodes->at(node2).setDepths(nodes);
 }
 
 void Tree::balance(std::vector<Tree>* nodes) {
@@ -212,4 +225,96 @@ void Tree::copyBoundaries(Tree* tree) {
 
 float Tree::getArea() {
     return max(maxx - minx, 0.0001f) * max(maxy - miny, 0.0001f) * max(maxz - minz, 0.0001f);
+}
+
+void Tree::updateParents(std::vector<Tree>* nodes) {
+    if (parent != -1) {
+        std::cout << "Updating parent" << std::endl;
+        Tree* p = &nodes->at(parent);
+        p->recalculateBoundingBox(nodes);
+        p->updateParents(nodes);
+    }
+}
+
+void Tree::updateTransformBoundingBox(std::vector<Tree>* nodes) {
+    recalculateBoundingBox(nodes);
+
+
+    std::cout << "Bounding box" << minx << " " << miny << " " << minz << " ::::: " << maxx << " " << maxy << " " << maxz << std::endl;
+
+    float p[8][4];
+
+    p[0][0] = this->maxx;
+    p[0][1] = this->maxy;
+    p[0][2] = this->maxz;
+    p[0][3] = 1;
+
+    p[1][0] = this->minx;
+    p[1][1] = this->maxy;
+    p[1][2] = this->maxz;
+    p[1][3] = 1;
+
+    p[2][0] = this->maxx;
+    p[2][1] = this->miny;
+    p[2][2] = this->maxz;
+    p[2][3] = 1;
+
+    p[3][0] = this->maxx;
+    p[3][1] = this->maxy;
+    p[3][2] = this->minz;
+    p[3][3] = 1;
+
+    p[4][0] = this->minx;
+    p[4][1] = this->miny;
+    p[4][2] = this->maxz;
+    p[4][3] = 1;
+
+    p[5][0] = this->minx;
+    p[5][1] = this->maxy;
+    p[5][2] = this->minz;
+    p[5][3] = 1;
+
+    p[6][0] = this->maxx;
+    p[6][1] = this->miny;
+    p[6][2] = this->minz;
+    p[6][3] = 1;
+
+    p[7][0] = this->minx;
+    p[7][1] = this->miny;
+    p[7][2] = this->minz;
+    p[7][3] = 1;
+
+
+    float result[4];
+    transform.multiplicate(result, p[0]);
+
+
+    this->minx = result[0];
+    this->maxx = result[0];
+
+    this->miny = result[1];
+    this->maxy = result[1];
+
+    this->minz = result[2];
+    this->maxz = result[2];
+
+    std::cout << result[0] << " " << result[1] << " " << result[2] << " " << result[3] << std::endl;
+
+
+    std::cout << "Bounding box" << minx << " " << miny << " " << minz << " ::::: " << maxx << " " << maxy << " " << maxz << std::endl;
+
+    for (int i = 1; i < 8; i++) {
+        transform.multiplicate(result, p[i]);
+        this->minx = min(this->minx, result[0]);
+        this->miny = min(this->miny, result[1]);
+        this->minz = min(this->minz, result[2]);
+
+        this->maxx = max(this->maxx, result[0]);
+        this->maxy = max(this->maxy, result[1]);
+        this->maxz = max(this->maxz, result[2]);
+    }
+
+    std::cout << "Bounding box" << minx << " " << miny << " " << minz << " ::::: " << maxx << " " << maxy << " " << maxz << std::endl;
+
+    updateParents(nodes);
 }

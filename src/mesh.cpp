@@ -124,6 +124,7 @@ void Mesh::rotate(float x, float y, float z) {
 void Mesh::updateRootTransform() {
     if (rootIndex != -1) {
         (*rtcontext->getNodes())[rootIndex].transform = transform;
+        rtcontext->getNodes()->at(rootIndex).updateTransformBoundingBox(rtcontext->getNodes());
         rtcontext->updateGPUTreenodesPartial(rootIndex, rootIndex + 1);
     }
 }

@@ -23,7 +23,7 @@ public:
     int leaf_id;
     int node1;
     int node2;
-    float padding1;
+    int depth;
 
     Matrix4x4 transform;
 
@@ -36,6 +36,9 @@ public:
     float getArea();
     void copyBoundaries(Tree* tree);
     float getSurface();
+    void updateParents(std::vector<Tree>* nodes);
+    void updateTransformBoundingBox(std::vector<Tree>* nodes);
+    void setDepths(std::vector<Tree>* nodes);
 
     void balance(std::vector<Tree>* tree);
     float unionSurface(Tree* node);

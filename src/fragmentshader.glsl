@@ -171,7 +171,9 @@ bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax) {
 
 // Triangle hit, -1 for miss
 int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
-  int treenodes[60];
+  int treenodes[12];
+
+  mat4 transforms[12];
 
   int currentNode = 0;
 
@@ -203,6 +205,7 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
     }
     else
     {
+
       int node1 = tree[treenodes[currentNode]].node1;
       int node2 = tree[treenodes[currentNode]].node2;
       bool hit1 = AABBHit(ray, tree[node1].minpos, tree[node1].maxpos);

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <cstring>
 #include <math.h>
+#include <iostream>
 
 #include "matrix4x4.h"
 
@@ -17,7 +18,7 @@ Matrix4x4::Matrix4x4(float input[16]) {
 
 void Matrix4x4::setData(float* input)
 {
-    std::memcpy(&data, input, 16);
+    std::memcpy(&data, input, sizeof(float) * 16);
 }
 
 Matrix4x4 Matrix4x4::multiplicate(Matrix4x4* other) {
@@ -101,7 +102,14 @@ void Matrix4x4::setPosition(float x, float y, float z) {
                     0, 0, 1, z,
                     0, 0, 0, 1};
 
+
+    std::cout << "Whooptiedoo" << std::endl;
+    Matrix4x4(xs).print();
+
     *this = Matrix4x4(xs);
+
+    std::cout << "Whooptiedoo" << std::endl;
+    print();
 }
 
 void Matrix4x4::move(float x, float y, float z) {
@@ -113,4 +121,23 @@ void Matrix4x4::move(float x, float y, float z) {
     Matrix4x4 moveMatrix = Matrix4x4(xs);
 
     *this = this->multiplicate(&moveMatrix);
+}
+
+void Matrix4x4::multiplicate(float* result, float* other) {
+    for (int y = 0; y < 4; y++) {
+        result[y] = 0;
+        for (int x = 0; x < 4; x++) {
+            result[y] += data[y][x] * other[x];
+        }
+    }
+}
+
+void Matrix4x4::print() {
+    std::cout << "Matrix4x4: " << std::endl;
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            std::cout << data[y][x] << ":";
+        }
+        std::cout << std::endl;
+    }
 }

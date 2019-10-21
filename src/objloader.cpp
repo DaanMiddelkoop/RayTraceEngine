@@ -136,6 +136,7 @@ void ObjLoader::loadObjFile(std::string file_name)
 
 void ObjLoader::inflate(Mesh* mesh)
 {
+    std::cout << "NUMBER OF TRIANGLES IN MODEL: " << this->triangles.size() << std::endl;
     mesh->setTriangles(&this->triangles);
     mesh->build();
 }
