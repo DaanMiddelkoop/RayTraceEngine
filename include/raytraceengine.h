@@ -6,6 +6,7 @@
 #include "raytracecontext.h"
 #include "rtwindow.h"
 #include "mesh.h"
+#include "objloader.h"
 
 namespace RT
 {

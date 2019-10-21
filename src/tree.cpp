@@ -16,21 +16,13 @@ Tree::Tree() {
     maxx = 0.0f;
     maxy = 0.0f;
     maxz = 0.0f;
-
-    offsetx = 0.0f;
-    offsety = 0.0f;
-    offsetz = 0.0f;
-
-    rotatex = 0.0f;
-    rotatey = 0.0f;
-    rotatez = 0.0f;
 }
 
 void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
 
     if (leaf) {
         if (leaf_id == -1) {
-            leaf_id = node.leaf_id;
+            *this = node;
         } else {
             leaf = false;
             // This node is a leaf, turn it into a node instead.

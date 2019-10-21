@@ -27,6 +27,20 @@ class Triangle
         float u2;
         float v2;
 
+        float vn1x;
+        float vn1y;
+        float vn1z;
+        float w1;
+
+        float vn2x;
+        float vn2y;
+        float vn2z;
+        float w2;
+
+        float vn3x;
+        float vn3y;
+        float vn3z;
+        float w3;
 
         float minx();
         float miny();

@@ -20,6 +20,15 @@ struct Triangle {
   float v1;
   float u2;
   float v2;
+
+  vec3 n1;
+  float w1;
+
+  vec3 n2;
+  float w2;
+
+  vec3 n3;
+  float w3;
 };
 
 struct Tree {
@@ -29,13 +38,12 @@ struct Tree {
   vec3 maxpos;
   int leaf;
 
-  vec3 offset;
   int leaf_id;
-
-  vec3 rotation;
   int node1;
-
   int node2;
+  float padding;
+
+  mat4 transform;
 };
 
 struct Ray {
@@ -92,28 +100,35 @@ uniform ivec2 size;
 
 vec4 getTextureColor(int tr, float u, float v) {
   Triangle t = triangles[tr];
-  Material mat = materials[t.material];
-  Texture tex = textures[mat.texture_id];
 
-  //return vec4(u, v, 0.0, 1.0);
-  int x = int((u * t.u1) + (v * t.u2) + ((1 - u - v) * t.u3));
-  int y = int((u * t.v1) + (v * t.v2) + ((1 - u - v) * t.v3));
-
-  //return vec4(float(pixels[tex.pixel_pointer] / 255), 0.0, 0.0, 1.0);
-
-  int pixel_loc = y * tex.width + x;
-
-  uint color = pixels[tex.pixel_pointer + pixel_loc];
-
-  //return vec4(float(tex.pixel_pointer + pixel_loc) / 255, float(0) / 255, float(tex.width) / 255, 1.0);
+  if (t.material >= 0) {
+    Material mat = materials[t.material];
 
 
-  uint r = color & (0xFF << 24);
-  uint g = color & (0xFF << 16);
-  uint b = color & (0xFF << 8);
-  uint a = color & (0xFF);
+    Texture tex = textures[mat.texture_id];
 
-  return vec4(float(r) / 255, float(g) / 255, float(b) / (255), float(a) / (255));
+    //return vec4(u, v, 0.0, 1.0);
+    int x = int(((1 - u - v) * t.u1) + (u * t.u2) + (v * t.u3));
+    int y = int(((1 - u - v) * t.v1) + (u * t.v2) + (v * t.v3));
+
+    //return vec4(float(pixels[tex.pixel_pointer] / 255), 0.0, 0.0, 1.0);
+
+    int pixel_loc = y * tex.width + x;
+
+    uint color = pixels[tex.pixel_pointer + pixel_loc];
+
+    //return vec4(float(tex.pixel_pointer + pixel_loc) / 255, float(0) / 255, float(tex.width) / 255, 1.0);
+
+
+    uint r = color & (0xFF << 24);
+    uint g = color & (0xFF << 16);
+    uint b = color & (0xFF << 8);
+    uint a = color & (0xFF);
+
+    return vec4(float(r) / 255, float(g) / 255, float(b) / (255), float(a) / (255));
+  } else {
+    return vec4(0.0, 0.0, 0.0, 1.0);
+  }
 }
 
 bool TriangleHit(Ray ray, Triangle tr, inout float t, inout float u, inout float v) {
@@ -157,23 +172,34 @@ bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax) {
 // Triangle hit, -1 for miss
 int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
   int treenodes[60];
-  int trianglenodes[10];
 
   int currentNode = 0;
-  int maxTreenodes = 0;
+
+  t = 9999999999.0;
+  int triangle_id = -1;
 
   // manually check for hit with root.
   if (AABBHit(ray, tree[0].minpos, tree[0].maxpos)) {
     treenodes[0] = 0;
-    maxTreenodes = 1;
   }
-  int maxTriangles = 0;
 
-  while (currentNode < maxTreenodes) {
+
+  while (currentNode > -1) {
     if (tree[treenodes[currentNode]].leaf == 1) {
-        trianglenodes[maxTriangles] = tree[treenodes[currentNode]].leaf_id;
-        maxTriangles += 1;
-        currentNode += 1;
+        // Test triangle hit directly so we dont store possible triangles in way to large buffers slowing our stuff down, also less branching and ****
+        int tr_id = tree[treenodes[currentNode]].leaf_id;
+
+
+        float new_t;
+        float new_u;
+        float new_v;
+        if (TriangleHit(ray, triangles[tr_id], new_t, new_u, new_v) && new_t < t) {
+          u = new_u;
+          v = new_v;
+          t = new_t;
+          triangle_id = tr_id;
+        }
+        currentNode -= 1;
     }
     else
     {
@@ -185,8 +211,8 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
       if (hit1) {
         treenodes[currentNode] = node1;
         if (hit2) {
-          treenodes[maxTreenodes] = node2;
-          maxTreenodes += 1;
+          treenodes[currentNode + 1] = node2;
+          currentNode += 1;
         }
       }
       else
@@ -196,17 +222,19 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
         }
         else
         {
-          currentNode += 1;
+          currentNode -= 1;
         }
       }
     }
   }
 
-  currentNode = 0;
+  /*currentNode = 0;
   t = 9999999999.0;
   int triangle_id = -1;
 
-  while (currentNode < maxTriangles) {
+  while (currentNode < maxTriangles) {  currentNode = 0;
+  t = 9999999999.0;
+  int triangle_id = -1;
     float new_t;
     float new_u;
     float new_v;
@@ -217,10 +245,22 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
       triangle_id = trianglenodes[currentNode];
     }
     currentNode += 1;
-  }
+  }*/
+
 
   //return maxTreenodes;
   return triangle_id;
+}
+
+vec3 debugTrace(Ray ray) {
+  float t, u, v;
+
+  int tr = traverseTree(ray, t, u, v);
+  if (tr == -1) {
+    return vec3(1, 1, 1);
+  }
+
+  return vec3(float(tr) / 100, 0.0, 0.0);
 }
 
 vec3 trace(Ray ray) {
@@ -244,7 +284,7 @@ void main()
     ivec2 pix = ivec2(gl_FragCoord.xy);
     vec2 pos = (vec2(pix) / vec2(size.x - 1, size.y - 1)) - vec2(0.5, 0.5);
 
-    vec3 dir = eye_dir + ((pos.x * normal1) + (pos.y * normal2));
+    vec3 dir = normalize(eye_dir) + ((pos.x * normal1) + (pos.y * normal2));
 
     Ray ray;
     ray.origin = eye;

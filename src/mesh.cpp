@@ -46,14 +46,29 @@ void Mesh::setTriangles(std::vector<Triangle>* triangles) {
 
 }
 
+void Mesh::setUVCoords(float* coord, int length) {
+    for (int i = 0; i < length; i += 6) {
+        Triangle* t = &rtcontext->getTriangles()->at(tbegin + (i / 6));
+
+        t->u1 = coord[i];
+        t->v1 = coord[i + 1];
+        t->u2 = coord[i + 2];
+        t->v2 = coord[i + 3];
+        t->u3 = coord[i + 4];
+        t->v3 = coord[i + 5];
+    }
+}
+
 void Mesh::build() {
     // Remove all of the
+
 
     std::vector<Tree> nodes = std::vector<Tree>(0);
     nodes.reserve((tend - tbegin) * 5);
 
 
     Tree root = Tree();
+    root.transform = transform;
     root.setBoundaries(&rtcontext->getTriangles()->at(0));
     nodes.push_back(root);
     for (int i = tbegin; i < tend; i++) {
@@ -74,7 +89,7 @@ void Mesh::build() {
 
     }
 
-    rtcontext->addNode(&nodes);
+    this->rootIndex = rtcontext->addNode(&nodes);
 }
 
 void Mesh::update() {
@@ -84,4 +99,31 @@ void Mesh::update() {
 void Mesh::setMaterial(MaterialHandle* material) {
     this->material_id = material->material_id;
     std::cout << "material_id set: " << material_id << "\n";
+}
+
+void Mesh::setPosition(float x, float y, float z) {
+    this->transform.setPosition(x, y, z);
+    updateRootTransform();
+}
+
+void Mesh::move(float x, float y, float z) {
+    this->transform.move(x, y, z);
+    updateRootTransform();
+}
+
+void Mesh::setRotation(float x, float y, float z) {
+    this->transform.setRotation(x, y, z);
+    updateRootTransform();
+}
+
+void Mesh::rotate(float x, float y, float z) {
+    this->transform.rotate(x, y, z);
+    updateRootTransform();
+}
+
+void Mesh::updateRootTransform() {
+    if (rootIndex != -1) {
+        (*rtcontext->getNodes())[rootIndex].transform = transform;
+        rtcontext->updateGPUTreenodesPartial(rootIndex, rootIndex + 1);
+    }
 }

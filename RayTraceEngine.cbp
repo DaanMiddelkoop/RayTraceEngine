@@ -61,22 +61,32 @@
 		<Unit filename="include/KHR/khrplatform.h" />
 		<Unit filename="include/Triangle.h" />
 		<Unit filename="include/glad/glad.h" />
+		<Unit filename="include/material.h" />
 		<Unit filename="include/mesh.h" />
+		<Unit filename="include/objloader.h" />
+		<Unit filename="include/pixeldata.h" />
 		<Unit filename="include/raytracecontext.h" />
 		<Unit filename="include/raytraceengine.h" />
 		<Unit filename="include/rtobject.h" />
 		<Unit filename="include/rtwindow.h" />
+		<Unit filename="include/texture.h" />
 		<Unit filename="include/tree.h" />
+		<Unit filename="include/vertex.h" />
 		<Unit filename="src/Triangle.cpp" />
 		<Unit filename="src/fragmentshader.glsl" />
 		<Unit filename="src/glad.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="src/material.cpp" />
 		<Unit filename="src/mesh.cpp" />
+		<Unit filename="src/objloader.cpp" />
+		<Unit filename="src/pixeldata.cpp" />
 		<Unit filename="src/raytracecontext.cpp" />
 		<Unit filename="src/raytraceengine.cpp" />
 		<Unit filename="src/rtobject.cpp" />
+		<Unit filename="src/texture.cpp" />
 		<Unit filename="src/tree.cpp" />
+		<Unit filename="src/vertex.cpp" />
 		<Unit filename="src/vertexshader.glsl" />
 		<Extensions>
 			<code_completion />

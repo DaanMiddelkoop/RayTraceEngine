@@ -51,6 +51,8 @@ namespace RT {
             // Add a tree of nodes to the scene tree and return the location of the sub tree.
             int addNode(std::vector<Tree>* nodes);
 
+            std::vector<Tree>* getNodes();
+
             std::vector<Triangle>*  getTriangles();
 
 

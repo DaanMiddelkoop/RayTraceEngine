@@ -16,6 +16,10 @@ RayTraceContext::RayTraceContext()
 
 void RayTraceContext::init()
 {
+    // Claim first node of the aabb tree so we can manage objects.
+    aabbtree.push_back(Tree());
+
+
     unsigned int vertexShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
@@ -242,7 +246,22 @@ int RayTraceContext::addTriangles(std::vector<Triangle>* triangles) {
 int RayTraceContext::addNode(std::vector<Tree>* nodes) {
 
     this->aabbtree.reserve(this->aabbtree.size() + nodes->size());
-    this->aabbtree.insert(this->aabbtree.end(), nodes->begin(), nodes->end());
+
+    int currentNodeSize = this->aabbtree.size() - 1;
+    for (int i = 0; i < nodes->size(); i++) {
+        (*nodes)[i].parent += currentNodeSize;
+
+        if (!(*nodes)[i].leaf) {
+            (*nodes)[i].node1 += currentNodeSize;
+            (*nodes)[i].node2 += currentNodeSize;
+        }
+    }
+
+    this->aabbtree[0].insertNode(&aabbtree, 0, (*nodes)[0]);
+
+
+
+    this->aabbtree.insert(this->aabbtree.end(), nodes->begin() + 1, nodes->end());
 
     std::cout << "node 0: " << aabbtree[0].minx << ", " << aabbtree[0].miny << ", " << aabbtree[0].minz << " - " << aabbtree[0].maxx << ", " << aabbtree[0].maxy << ", " << aabbtree[0].maxz << "\n";
 
@@ -251,6 +270,10 @@ int RayTraceContext::addNode(std::vector<Tree>* nodes) {
 
 
     return this->aabbtree.size() - nodes->size();
+}
+
+std::vector<Tree>* RayTraceContext::getNodes() {
+    return &this->aabbtree;
 }
 
 void RayTraceContext::removeTriangles(int tbegin, int tend) {

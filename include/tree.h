@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include "Triangle.h"
+#include "matrix4x4.h"
 
 using namespace std;
 
@@ -19,20 +20,12 @@ public:
     float maxz;
     int leaf;
 
-    float offsetx;
-    float offsety;
-    float offsetz;
     int leaf_id;
-
-    float rotatex;
-    float rotatey;
-    float rotatez;
     int node1;
-
     int node2;
     float padding1;
-    float padding2;
-    float padding3;
+
+    Matrix4x4 transform;
 
 
     Tree();

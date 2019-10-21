@@ -13,6 +13,12 @@ Triangle::Triangle()
     v1 = 0.0;
     v2 = 2.0;
     v3 = 0.0;
+
+    w1 = 0;
+    w2 = 0;
+    w3 = 0;
+
+    material = -1;
 }
 
 float Triangle::minx() {
