@@ -25,6 +25,11 @@ public:
     int node2;
     int depth;
 
+    int isObject;
+    float padding0;
+    float padding1;
+    float padding2;
+
     Matrix4x4 transform;
 
 
@@ -43,6 +48,8 @@ public:
     void balance(std::vector<Tree>* tree);
     float unionSurface(Tree* node);
     void recalculateBoundingBox(std::vector<Tree>* nodes);
+    void printBB();
+    void print(std::vector<Tree>* nodes);
 };
 
 #endif

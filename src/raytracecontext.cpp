@@ -149,6 +149,8 @@ void RayTraceContext::init()
 
     debug_info = glGetUniformLocation(shaderProgram, "debug");
 
+    scene_root = glGetUniformLocation(shaderProgram, "scene_root");
+
 
 }
 
@@ -161,6 +163,14 @@ void RayTraceContext::updateGPUTriangles() {
 }
 
 void RayTraceContext::updateGPUTreenodes() {
+
+    for (int i = 0; i < aabbtree.size(); i++) {
+        std::cout << "node " << i << std::endl;
+        aabbtree.at(i).transform.print();
+        std::cout << "depth: " << aabbtree.at(i).depth << std::endl;
+
+    }
+
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, treenode_ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Tree) * aabbtree.size(), aabbtree.data(), GL_DYNAMIC_COPY);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, treenode_ssbo);
@@ -205,11 +215,10 @@ void RayTraceContext::updateGPUTreenodesPartial(int b, int e) {
 }
 
 Mesh* RayTraceContext::createMesh() {
-    Mesh mesh(this);
+    Mesh* mesh = new Mesh(this);
     meshes.push_back(mesh);
 
-
-    return &meshes.back();
+    return meshes.back();
 }
 
 MaterialHandle RayTraceContext::createMaterial() {
@@ -245,7 +254,7 @@ int RayTraceContext::addTriangles(std::vector<Triangle>* triangles) {
 
 int RayTraceContext::addNode(std::vector<Tree>* nodes) {
 
-    this->aabbtree.reserve(this->aabbtree.size() + nodes->size());
+    this->aabbtree.reserve(this->aabbtree.size() + nodes->size() + 1);
 
     int currentNodeSize = this->aabbtree.size() - 1;
     for (int i = 0; i < nodes->size(); i++) {
@@ -257,26 +266,36 @@ int RayTraceContext::addNode(std::vector<Tree>* nodes) {
         }
     }
 
+    std::cout << "Adding root node to world" << std::endl;
     this->aabbtree[0].insertNode(&aabbtree, 0, (*nodes)[0]);
+    std::cout << "Done adding root node to world" << std::endl;
 
-
-    int rootIndex = this->aabbtree.size() - 1;
+    int objectRoot = this->aabbtree.size() - 1;
 
     this->aabbtree.insert(this->aabbtree.end(), nodes->begin() + 1, nodes->end());
 
-    this->aabbtree.at(rootIndex).setDepths(&this->aabbtree);
+    this->aabbtree.at(objectRoot).setDepths(&this->aabbtree);
 
 
-    std::cout << "node 0: " << aabbtree[0].minx << ", " << aabbtree[0].miny << ", " << aabbtree[0].minz << " - " << aabbtree[0].maxx << ", " << aabbtree[0].maxy << ", " << aabbtree[0].maxz << "\n";
+    std::cout << "node 0: " << aabbtree[0].minx << ", " << aabbtree[0].miny << ", " << aabbtree[0].minz << " : " << aabbtree[0].maxx << ", " << aabbtree[0].maxy << ", " << aabbtree[0].maxz << " " <<  aabbtree[0].node1 << " " << aabbtree[0].node2 << "\n";
+
 
     updateGPUTreenodes();
     updateGPUTriangles();
 
-    std::cout << "Depth of root index: " << this->aabbtree.at(rootIndex).depth << std::endl;
-    this->aabbtree.at(rootIndex).transform.print();
+    int sceneroot = 0;
+    while (this->aabbtree.at(sceneroot).parent != -1) {
+        sceneroot = this->aabbtree.at(sceneroot).parent;
+    }
+
+    setSceneRoot(sceneroot);
 
 
-    return rootIndex;
+
+    std::cout << "Depth of root index: " << this->aabbtree.at(objectRoot).depth << std::endl;
+
+
+    return objectRoot;
 }
 
 std::vector<Tree>* RayTraceContext::getNodes() {
@@ -316,5 +335,18 @@ void RayTraceContext::draw(Window* window) {
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void RayTraceContext::setSceneRoot(int root) {
+    glUniform1i(scene_root, root);
+}
+
+int RayTraceContext::recoverSceneRoot() {
+    int sceneroot = 0;
+    while (this->aabbtree.at(sceneroot).parent != -1) {
+        sceneroot = this->aabbtree.at(sceneroot).parent;
+    }
+    setSceneRoot(sceneroot);
+    return sceneroot;
 }
 

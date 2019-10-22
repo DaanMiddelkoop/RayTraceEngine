@@ -40,13 +40,13 @@
 	<glad/glad.h>
 	<GLFW/glfw3.h>
 
-1570461693 source:/home/daan/projects/RayTraceEngine/src/raytraceengine.cpp
+1571772473 source:/home/daan/projects/RayTraceEngine/src/raytraceengine.cpp
 	<iostream>
 	"raytraceengine.h"
 	"rtwindow.h"
 	"raytracecontext.h"
 
-1571761313 source:/home/daan/projects/RayTraceEngine/src/mesh.cpp
+1571786430 source:/home/daan/projects/RayTraceEngine/src/mesh.cpp
 	<iostream>
 	"mesh.h"
 	<vector>
@@ -72,7 +72,7 @@
 	<glad/glad.h>
 	<GLFW/glfw3.h>
 
-1571760820 source:/home/daan/projects/RayTraceEngine/src/raytracecontext.cpp
+1571784477 source:/home/daan/projects/RayTraceEngine/src/raytracecontext.cpp
 	<iostream>
 	"raytracecontext.h"
 	<string>
@@ -83,7 +83,7 @@
 	"vertexshader.glsl"
 	"fragmentshader.glsl"
 
-1571659555 /home/daan/projects/RayTraceEngine/include/raytracecontext.h
+1571778216 /home/daan/projects/RayTraceEngine/include/raytracecontext.h
 	"rtwindow.h"
 	<vector>
 	"Triangle.h"
@@ -93,9 +93,9 @@
 
 1570468606 /home/daan/projects/RayTraceEngine/src/vertexshader.glsl
 
-1571763983 /home/daan/projects/RayTraceEngine/src/fragmentshader.glsl
+1571786161 /home/daan/projects/RayTraceEngine/src/fragmentshader.glsl
 
-1571750312 /home/daan/projects/RayTraceEngine/include/tree.h
+1571786698 /home/daan/projects/RayTraceEngine/include/tree.h
 	<algorithm>
 	<vector>
 	"Triangle.h"
@@ -112,7 +112,7 @@
 	"Triangle.h"
 	<algorithm>
 
-1571760173 source:/home/daan/projects/RayTraceEngine/src/tree.cpp
+1571786748 source:/home/daan/projects/RayTraceEngine/src/tree.cpp
 	<iostream>
 	"tree.h"
 
@@ -154,12 +154,12 @@
 1571520442 source:/home/daan/projects/RayTraceEngine/src/vertex.cpp
 	"vertex.h"
 
-1571762586 source:/home/daan/projects/RayTraceEngine/src/matrix4x4.cpp
+1571767987 source:/home/daan/projects/RayTraceEngine/src/matrix4x4.cpp
 	<stdio.h>
 	<cstring>
 	<math.h>
 	<iostream>
 	"matrix4x4.h"
 
-1571750312 /home/daan/projects/RayTraceEngine/include/matrix4x4.h
+1571767957 /home/daan/projects/RayTraceEngine/include/matrix4x4.h
 

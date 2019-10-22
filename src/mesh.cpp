@@ -89,6 +89,8 @@ void Mesh::build() {
 
     }
 
+    nodes[0].isObject = true;
+
     this->rootIndex = rtcontext->addNode(&nodes);
 }
 
@@ -98,7 +100,6 @@ void Mesh::update() {
 
 void Mesh::setMaterial(MaterialHandle* material) {
     this->material_id = material->material_id;
-    std::cout << "material_id set: " << material_id << "\n";
 }
 
 void Mesh::setPosition(float x, float y, float z) {
@@ -124,12 +125,12 @@ void Mesh::rotate(float x, float y, float z) {
 void Mesh::updateRootTransform() {
     if (rootIndex != -1) {
         (*rtcontext->getNodes())[rootIndex].transform = transform;
-        std::cout << "received new transform, root index node: " << rootIndex << std::endl;
-        transform.print();
 
         rtcontext->getNodes()->at(rootIndex).updateTransformBoundingBox(rtcontext->getNodes());
 
         rtcontext->updateGPUTreenodes();
+
         //rtcontext->updateGPUTreenodesPartial(rootIndex, rootIndex + 1);
     }
+
 }

@@ -22,6 +22,7 @@ void error_callback(int error, const char* description)
 int RT::init()
 {
     std::cout << "Initing RT library v0.1\n";
+    rtcontexts.reserve(10);
 
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);

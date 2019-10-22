@@ -86,12 +86,14 @@ namespace RT {
 
             void setDebugInfo(float x, float y, float z);
 
+            int recoverSceneRoot();
+
 
 
         protected:
 
         private:
-            std::vector<Mesh> meshes;
+            std::vector<Mesh*> meshes;
             std::vector<Triangle> triangles;
             std::vector<Tree> aabbtree;
             std::vector<Material> materials;
@@ -112,6 +114,10 @@ namespace RT {
 
             GLuint screen_size;
             GLuint debug_info;
+
+            GLuint scene_root;
+
+            void setSceneRoot(int root);
     };
 }
 

@@ -25,7 +25,7 @@ class Matrix4x4
     protected:
 
     private:
-        int multiplicate_row_col(Matrix4x4* other, int row, int column);
+        float multiplicate_row_col(Matrix4x4* other, int row, int column);
 
 };
 
