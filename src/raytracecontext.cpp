@@ -260,16 +260,23 @@ int RayTraceContext::addNode(std::vector<Tree>* nodes) {
     this->aabbtree[0].insertNode(&aabbtree, 0, (*nodes)[0]);
 
 
+    int rootIndex = this->aabbtree.size() - 1;
 
     this->aabbtree.insert(this->aabbtree.end(), nodes->begin() + 1, nodes->end());
+
+    this->aabbtree.at(rootIndex).setDepths(&this->aabbtree);
+
 
     std::cout << "node 0: " << aabbtree[0].minx << ", " << aabbtree[0].miny << ", " << aabbtree[0].minz << " - " << aabbtree[0].maxx << ", " << aabbtree[0].maxy << ", " << aabbtree[0].maxz << "\n";
 
     updateGPUTreenodes();
     updateGPUTriangles();
 
+    std::cout << "Depth of root index: " << this->aabbtree.at(rootIndex).depth << std::endl;
+    this->aabbtree.at(rootIndex).transform.print();
 
-    return this->aabbtree.size() - nodes->size();
+
+    return rootIndex;
 }
 
 std::vector<Tree>* RayTraceContext::getNodes() {

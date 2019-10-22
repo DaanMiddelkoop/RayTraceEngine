@@ -41,7 +41,7 @@ struct Tree {
   int leaf_id;
   int node1;
   int node2;
-  float padding;
+  int depth;
 
   mat4 transform;
 };
@@ -169,13 +169,19 @@ bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax) {
 	return (tmin <= tmax);
 }
 
+
 // Triangle hit, -1 for miss
 int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
-  int treenodes[12];
+  int treenodes[20];
 
-  mat4 transforms[12];
+  mat4 tm = mat4(1.0, 0.0, 0.0, 0.0,
+                  0.0, 1.0, 0.0, 0.0,
+                  0.0, 0.0, 1.0, 0.0,
+                  0.0, 0.0, 0.0, 1.0);
+
 
   int currentNode = 0;
+  int nextNode = 0;
 
   t = 9999999999.0;
   int triangle_id = -1;
@@ -186,36 +192,48 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
   }
 
 
-  while (currentNode > -1) {
+  while (nextNode > -1) {
+    currentNode = nextNode;
+    
+    tm = tm * tree[treenodes[currentNode]].transform;
+
+    Ray moved_ray;
+    moved_ray.origin = (tm * vec4(ray.origin.xyz, 1)).xyz;
+    moved_ray.dir    = (tm * vec4(ray.dir.xyz, 0)   ).xyz;
+
+
     if (tree[treenodes[currentNode]].leaf == 1) {
         // Test triangle hit directly so we dont store possible triangles in way to large buffers slowing our stuff down, also less branching and ****
         int tr_id = tree[treenodes[currentNode]].leaf_id;
 
 
+
+
         float new_t;
         float new_u;
         float new_v;
-        if (TriangleHit(ray, triangles[tr_id], new_t, new_u, new_v) && new_t < t) {
+        if (TriangleHit(moved_ray, triangles[tr_id], new_t, new_u, new_v) && new_t < t) {
           u = new_u;
           v = new_v;
           t = new_t;
           triangle_id = tr_id;
         }
-        currentNode -= 1;
+
+        nextNode = currentNode - 1;
     }
     else
     {
 
       int node1 = tree[treenodes[currentNode]].node1;
       int node2 = tree[treenodes[currentNode]].node2;
-      bool hit1 = AABBHit(ray, tree[node1].minpos, tree[node1].maxpos);
-      bool hit2 = AABBHit(ray, tree[node2].minpos, tree[node2].maxpos);
+      bool hit1 = AABBHit(moved_ray, tree[node1].minpos, tree[node1].maxpos);
+      bool hit2 = AABBHit(moved_ray, tree[node2].minpos, tree[node2].maxpos);
 
       if (hit1) {
         treenodes[currentNode] = node1;
         if (hit2) {
           treenodes[currentNode + 1] = node2;
-          currentNode += 1;
+          nextNode = currentNode + 1;
         }
       }
       else
@@ -225,30 +243,23 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
         }
         else
         {
-          currentNode -= 1;
+          nextNode = currentNode - 1;
         }
       }
     }
+
   }
 
-  /*currentNode = 0;
-  t = 9999999999.0;
-  int triangle_id = -1;
+  int currentDepth = tree[treenodes[currentNode]].depth;
+  int goalDepth = tree[treenodes[nextNode]].depth;
 
-  while (currentNode < maxTriangles) {  currentNode = 0;
-  t = 9999999999.0;
-  int triangle_id = -1;
-    float new_t;
-    float new_u;
-    float new_v;
-    if (TriangleHit(ray, triangles[trianglenodes[currentNode]], new_t, new_u, new_v) && new_t < t) {
-      u = new_u;
-      v = new_v;
-      t = new_t;
-      triangle_id = trianglenodes[currentNode];
-    }
-    currentNode += 1;
-  }*/
+  int index = treenodes[currentNode];
+
+
+  while (goalDepth <= currentDepth && tree[index].parent != -1) {
+    tm = tm * inverse(tree[index].transform);
+    index = tree[index].parent;
+  }
 
 
   //return maxTreenodes;
@@ -263,7 +274,7 @@ vec3 debugTrace(Ray ray) {
     return vec3(1, 1, 1);
   }
 
-  return vec3(float(tr) / 100, 0.0, 0.0);
+  return vec3(t / 255, 0.0, 0.0);
 }
 
 vec3 trace(Ray ray) {

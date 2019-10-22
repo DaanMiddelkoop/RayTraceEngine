@@ -64,13 +64,17 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
 }
 
 void Tree::setDepths(std::vector<Tree>* nodes) {
+
     if (parent != -1) {
         depth = nodes->at(parent).depth + 1;
     } else {
         depth = 0;
     }
-    nodes->at(node1).setDepths(nodes);
-    nodes->at(node2).setDepths(nodes);
+
+    if (!leaf) {
+        nodes->at(node1).setDepths(nodes);
+        nodes->at(node2).setDepths(nodes);
+    }
 }
 
 void Tree::balance(std::vector<Tree>* nodes) {
