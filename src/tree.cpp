@@ -22,9 +22,7 @@ Tree::Tree() {
 }
 
 void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
-    std::cout << "insert" << std::endl;
     if (isObject) {
-        std::cout << "WOWOWOWOW STOP RIGHT HERE" << std::endl;
 
         printBB();
 
@@ -39,10 +37,11 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
         newRoot.leaf = false;
         newRoot.isObject = false;
 
-
-
         depth += 1;
         node.depth = depth;
+
+        nodes->at(node1).setDepths(nodes);
+        nodes->at(node2).setDepths(nodes);
 
         node.parent = nodes->size();
         parent = nodes->size();
@@ -93,19 +92,18 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
             (*nodes)[node2].insertNode(nodes, node2, node);
         }
         balance(nodes);
+
     }
 }
 
 void Tree::setDepths(std::vector<Tree>* nodes) {
-    print(nodes);
-
     if (parent != -1) {
         depth = nodes->at(parent).depth + 1;
     } else {
         depth = 0;
     }
 
-    std::cout << "depth set to " << depth << " of node " << this - nodes->data() << std::endl;
+    //std::cout << "depth set to " << depth << " of node " << this - nodes->data() << std::endl;
 
     if (!leaf) {
         nodes->at(node1).setDepths(nodes);

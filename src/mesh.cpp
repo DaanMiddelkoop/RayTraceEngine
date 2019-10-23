@@ -133,4 +133,12 @@ void Mesh::updateRootTransform() {
         //rtcontext->updateGPUTreenodesPartial(rootIndex, rootIndex + 1);
     }
 
+
+    /*std::cout << "Nodes after a movement: " << std::endl;
+    for (int i = 0; i < rtcontext->getNodes()->size(); i++) {
+        rtcontext->getNodes()->at(i).print(rtcontext->getNodes());
+        rtcontext->getNodes()->at(i).printBB();
+        rtcontext->getNodes()->at(i).transform.print();
+    } */
+
 }

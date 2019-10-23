@@ -18,7 +18,6 @@ void error_callback(int error, const char* description)
     std::cout << error << ", " << description << "\n";
 }
 
-
 int RT::init()
 {
     std::cout << "Initing RT library v0.1\n";

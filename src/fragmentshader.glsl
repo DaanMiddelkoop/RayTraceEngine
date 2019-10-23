@@ -137,7 +137,7 @@ vec4 getTextureColor(int tr, float u, float v) {
   }
 }
 
-bool TriangleHit(Ray ray, Triangle tr, inout float t, inout float u, inout float v) {
+bool TriangleHit(Ray ray, Triangle tr, out float t, out float u, out float v) {
   vec3 v0v1 = tr.b - tr.a;
   vec3 v0v2 = tr.c - tr.a;
   vec3 pvec = cross(ray.dir, v0v2);
@@ -161,7 +161,7 @@ bool TriangleHit(Ray ray, Triangle tr, inout float t, inout float u, inout float
   return true;
 }
 
-bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax) {
+bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax, out float tmin) {
   vec3 invD = 1.0 / ray.dir;
 	vec3 t0s = (aabbmin - ray.origin) * invD;
 	vec3 t1s = (aabbmax - ray.origin) * invD;
@@ -169,7 +169,7 @@ bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax) {
 	vec3 tsmaller = min(t0s, t1s);
 	vec3 tbigger  = max(t0s, t1s);
 
-	float tmin = max(tsmaller.x, max(tsmaller.y, tsmaller.z));
+	tmin = max(tsmaller.x, max(tsmaller.y, tsmaller.z));
 	float tmax = min(tbigger.x, min(tbigger.y, tbigger.z));
 
 	return (tmin <= tmax);
@@ -177,8 +177,8 @@ bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax) {
 
 
 // Triangle hit, -1 for miss
-int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
-  int treenodes[5];
+int traverseTree(Ray ray, out float t, out float u, out float v) {
+  int treenodes[25];
 
   mat4 tm = mat4(1.0, 0.0, 0.0, 0.0,
                   0.0, 1.0, 0.0, 0.0,
@@ -186,14 +186,15 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
                   0.0, 0.0, 0.0, 1.0);
 
 
+  t = 99999999999.0;
   int currentNode = 0;
   int nextNode = 0;
 
-  t = 9999999999.0;
   int triangle_id = -1;
 
   // manually check for hit with root.
-  if (AABBHit(ray, tree[scene_root].minpos, tree[scene_root].maxpos)) {
+  float t_stuff;
+  if (AABBHit(ray, tree[scene_root].minpos, tree[scene_root].maxpos, t_stuff)) {
     treenodes[0] = scene_root;
   } else {
     return -1;
@@ -203,9 +204,9 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
 
 
   while (nextNode > -1) {
+
     currentNode = nextNode;
     maxTreenodes += 1;
-
 
     int tree_index = treenodes[currentNode];
 
@@ -215,8 +216,6 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
     Ray moved_ray;
     moved_ray.origin = (tm * vec4(ray.origin.xyz, 1)).xyz;
     moved_ray.dir    = (tm * vec4(ray.dir   .xyz, 0)).xyz;
-
-
 
 
     if (tree[tree_index].leaf == 1) {
@@ -241,8 +240,14 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
 
       int node1 = tree[tree_index].node1;
       int node2 = tree[tree_index].node2;
-      bool hit1 = AABBHit(moved_ray, tree[node1].minpos, tree[node1].maxpos);
-      bool hit2 = AABBHit(moved_ray, tree[node2].minpos, tree[node2].maxpos);
+
+      float boxdist;
+
+      bool hit1 = AABBHit(moved_ray, tree[node1].minpos, tree[node1].maxpos, boxdist);
+      hit1 = hit1 && boxdist < t;
+
+      bool hit2 = AABBHit(moved_ray, tree[node2].minpos, tree[node2].maxpos, boxdist);
+      hit2 = hit2 && boxdist < t;
 
       if (hit1) {
         treenodes[currentNode] = node1;
@@ -281,12 +286,14 @@ int traverseTree(Ray ray, inout float t, inout float u, inout float v) {
 
 vec3 debugTrace(Ray ray) {
   float t, u, v;
+  //u = 0;
+  //v = 0;
 
   int tr = traverseTree(ray, t, u, v);
   if (tr == -1) {
     return vec3(1, 1, 1);
   }
-  return vec3(float(tr) / 255, t / 4, 0.0);
+  return vec3(float(t) / 25.5, float(tr) / 255, 0.0);
 }
 
 vec3 trace(Ray ray) {
@@ -314,10 +321,10 @@ void main()
 
     Ray ray;
     ray.origin = eye;
-    ray.dir = dir;
+    ray.dir = normalize(dir);
 
     //FragColor = vec4(pos.x, pos.y, 0.0f, 1.0f);
 
-    FragColor = vec4(trace(ray).xyz, 1.0);
+    FragColor = vec4(debugTrace(ray).xyz, 1.0);
 }
 )""

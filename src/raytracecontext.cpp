@@ -163,14 +163,6 @@ void RayTraceContext::updateGPUTriangles() {
 }
 
 void RayTraceContext::updateGPUTreenodes() {
-
-    for (int i = 0; i < aabbtree.size(); i++) {
-        std::cout << "node " << i << std::endl;
-        aabbtree.at(i).transform.print();
-        std::cout << "depth: " << aabbtree.at(i).depth << std::endl;
-
-    }
-
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, treenode_ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Tree) * aabbtree.size(), aabbtree.data(), GL_DYNAMIC_COPY);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, treenode_ssbo);
@@ -185,7 +177,6 @@ void RayTraceContext::updateGPUMaterials() {
 }
 
 void RayTraceContext::updateGPUTextures() {
-    std::cout << textures[0].width << ", " << textures[0].height << " TEXTURE DIMENSIONS!!!!\n";
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, textures_ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Texture) * textures.size(), textures.data(), GL_DYNAMIC_COPY);
@@ -256,8 +247,12 @@ int RayTraceContext::addNode(std::vector<Tree>* nodes) {
 
     this->aabbtree.reserve(this->aabbtree.size() + nodes->size() + 1);
 
+    int oldRoot = recoverSceneRoot();
+
+    this->aabbtree[oldRoot].insertNode(&aabbtree, oldRoot, (*nodes)[0]);
+
     int currentNodeSize = this->aabbtree.size() - 1;
-    for (int i = 0; i < nodes->size(); i++) {
+    for (int i = 1; i < nodes->size(); i++) {
         (*nodes)[i].parent += currentNodeSize;
 
         if (!(*nodes)[i].leaf) {
@@ -266,18 +261,15 @@ int RayTraceContext::addNode(std::vector<Tree>* nodes) {
         }
     }
 
-    std::cout << "Adding root node to world" << std::endl;
-    this->aabbtree[0].insertNode(&aabbtree, 0, (*nodes)[0]);
-    std::cout << "Done adding root node to world" << std::endl;
-
     int objectRoot = this->aabbtree.size() - 1;
+    this->aabbtree.at(objectRoot).node1 += currentNodeSize;
+    this->aabbtree.at(objectRoot).node2 += currentNodeSize;
+
 
     this->aabbtree.insert(this->aabbtree.end(), nodes->begin() + 1, nodes->end());
 
+
     this->aabbtree.at(objectRoot).setDepths(&this->aabbtree);
-
-
-    std::cout << "node 0: " << aabbtree[0].minx << ", " << aabbtree[0].miny << ", " << aabbtree[0].minz << " : " << aabbtree[0].maxx << ", " << aabbtree[0].maxy << ", " << aabbtree[0].maxz << " " <<  aabbtree[0].node1 << " " << aabbtree[0].node2 << "\n";
 
 
     updateGPUTreenodes();
@@ -292,7 +284,7 @@ int RayTraceContext::addNode(std::vector<Tree>* nodes) {
 
 
 
-    std::cout << "Depth of root index: " << this->aabbtree.at(objectRoot).depth << std::endl;
+
 
 
     return objectRoot;
