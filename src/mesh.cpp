@@ -11,6 +11,7 @@ Mesh::Mesh(RayTraceContext* rtcontext)
 
     Matrix4x4 transform = Matrix4x4();
     this->transform_id = rtcontext->addTransform(&transform);
+    rtcontext->updateGPUTransforms();
 
     std::cout << "New mesh created and assigned a transform id: " << transform_id << std::endl;
 }
@@ -135,14 +136,13 @@ void Mesh::updateRootTransform() {
             std::cout << "Setting transform_parents of object " << this << std::endl;
             (*rtcontext->getNodes())[rootIndex].transform_id = transform_id;
             (*rtcontext->getNodes())[rootIndex].updateTransformParents(rtcontext->getNodes());
+            rtcontext->updateGPUTreenodes();
         }
 
         rtcontext->getNodes()->at(rootIndex).updateTransformBoundingBox(rtcontext->getNodes(), getTransform());
 
-        rtcontext->updateGPUTreenodes();
-        rtcontext->updateGPUTransforms();
-
-        //rtcontext->updateGPUTreenodesPartial(rootIndex, rootIndex + 1);
+        rtcontext->updateGPUTransform(transform_id);
+        rtcontext->updateGPUTreenodesPath(rootIndex);
     }
 
     //std::cout << "Scene root node: " << rtcontext->recoverSceneRoot() << std::endl;

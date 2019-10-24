@@ -169,6 +169,7 @@ void RayTraceContext::updateGPUTriangles() {
 }
 
 void RayTraceContext::updateGPUTreenodes() {
+    std::cout << "Updating gpu treenodes " << std::endl;
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, treenode_ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Tree) * aabbtree.size(), aabbtree.data(), GL_DYNAMIC_COPY);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, treenode_ssbo);
@@ -204,6 +205,14 @@ void RayTraceContext::updateGPUTransforms() {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
+void RayTraceContext::updateGPUTransform(int transform_id) {
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, transforms_ssbo);
+    GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    memcpy(p + (transform_id * sizeof(Matrix4x4)), ((void*)transforms.data()) + (transform_id * sizeof(Matrix4x4)), sizeof(Matrix4x4));
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
 void RayTraceContext::updateGPUTrianglesPartial(int b, int e) {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangle_ssbo);
     GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
@@ -216,6 +225,19 @@ void RayTraceContext::updateGPUTreenodesPartial(int b, int e) {
     GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
     memcpy(p, aabbtree.data() + b, sizeof(Tree) * (e - b));
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+}
+
+void RayTraceContext::updateGPUTreenodesPath(int node) {
+    return;
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, treenode_ssbo);
+    GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+    memcpy(p + node * sizeof(Tree), &aabbtree[node], sizeof(Tree));
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
+    if (aabbtree[node].parent != -1) {
+        updateGPUTreenodesPath(aabbtree[node].parent);
+    }
 }
 
 Mesh* RayTraceContext::createMesh() {

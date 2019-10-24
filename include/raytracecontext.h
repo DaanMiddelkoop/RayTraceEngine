@@ -78,11 +78,15 @@ namespace RT {
 
             void updateGPUTransforms();
 
+            void updateGPUTransform(int transform_id);
+
             // Update part of triangles on gpu
             void updateGPUTrianglesPartial(int b, int e);
 
             // Update part of treenodes on gpu.
             void updateGPUTreenodesPartial(int b, int e);
+
+            void updateGPUTreenodesPath(int node);
 
 
             // Set the position of the camera in the scene.

@@ -26,7 +26,7 @@ Tree::Tree() {
 
 void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
     if (isObject) {
-
+        std::cout << "founnd object leaf" << std::endl;
         printBB();
 
         Tree newRoot = (*this);
@@ -39,17 +39,37 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
         newRoot.leaf = false;
         newRoot.isObject = false;
 
-        depth += 1;
-        node.depth = depth;
+        // Fix reference from this nodes parent to newRoot;
+         if (parent != -1) {
+            if (nodes->at(parent).node1 == (this - nodes->data())) {
+                nodes->at(parent).node1 = nodes->size();
+            } else if (nodes->at(parent).node2 == (this - nodes->data())) {
+                nodes->at(parent).node2 = nodes->size();
+            } else {
+                std::cout << "BIG ERROR" << std::endl;
+            }
+        }
+
+
+        std::cout << "Setting depths of node " << node1 << std::endl;
 
         nodes->at(node1).setDepths(nodes);
+
+        std::cout << "Setting depths of node " << node2 << std::endl;
         nodes->at(node2).setDepths(nodes);
+
+        std::cout << "finished fixing depths " << std::endl;
+
+
 
         node.parent = nodes->size();
         parent = nodes->size();
 
         nodes->push_back(newRoot);
         nodes->push_back(node);
+
+
+        newRoot.setDepths(nodes);
 
         return;
     }
@@ -71,11 +91,12 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
 
             leaf_id = 0;
 
-            nodes->push_back(child1);
+            node.parent = own_id;
+
+            nodes->push_back(node);
             node1 = nodes->size() - 1;
 
-            node.parent = own_id;
-            nodes->push_back(node);
+            nodes->push_back(child1);
             node2 = nodes->size() - 1;
         }
 
@@ -105,8 +126,6 @@ void Tree::setDepths(std::vector<Tree>* nodes) {
         depth = 0;
     }
 
-    //std::cout << "depth set to " << depth << " of node " << this - nodes->data() << std::endl;
-
     if (!leaf) {
         nodes->at(node1).setDepths(nodes);
         nodes->at(node2).setDepths(nodes);
@@ -118,6 +137,11 @@ void Tree::balance(std::vector<Tree>* nodes) {
     // http://box2d.org/files/GDC2019/ErinCatto_DynamicBVH_GDC2019.pdf rotations part
 
     // Rotate b and f;
+
+    if (leaf || nodes->at(node1).isObject || nodes->at(node2).isObject) {
+        return;
+    }
+
     if (!nodes->at(node2).leaf) {
 
         float SA1 = nodes->at(node2).getSurface();
@@ -129,6 +153,10 @@ void Tree::balance(std::vector<Tree>* nodes) {
             nodes->at(node2).node1 = node1;
             node1 = new_node1;
             nodes->at(node2).recalculateBoundingBox(nodes);
+
+            // fixing parents
+            nodes->at(nodes->at(node2).node1).parent = node2;
+            nodes->at(node1).parent = this - nodes->data();
         }
     }
 
@@ -144,6 +172,10 @@ void Tree::balance(std::vector<Tree>* nodes) {
             nodes->at(node1).node2 = node2;
             node2 = new_node2;
             nodes->at(node1).recalculateBoundingBox(nodes);
+
+            // fixing parents
+            nodes->at(nodes->at(node1).node2).parent = node1;
+            nodes->at(node2).parent = this - nodes->data();
         }
     }
 
@@ -159,6 +191,9 @@ void Tree::balance(std::vector<Tree>* nodes) {
             nodes->at(node2).node2 = node1;
             node1 = new_node1;
             nodes->at(node2).recalculateBoundingBox(nodes);
+
+            nodes->at(nodes->at(node2).node2).parent = node2;
+            nodes->at(node1).parent = this - nodes->data();
         }
     }
 
@@ -174,6 +209,9 @@ void Tree::balance(std::vector<Tree>* nodes) {
             nodes->at(node1).node1 = node2;
             node2 = new_node2;
             nodes->at(node1).recalculateBoundingBox(nodes);
+
+            nodes->at(nodes->at(node1).node1).parent = node1;
+            nodes->at(node2).parent = this - nodes->data();
         }
     }
 }
