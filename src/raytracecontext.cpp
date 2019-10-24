@@ -140,6 +140,12 @@ void RayTraceContext::init()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, pixels_ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+    glGenBuffers(1, &transforms_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, transforms_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Matrix4x4) * transforms.size(), transforms.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, transforms_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 
     // Set camera buffers;
     eye = glGetUniformLocation(shaderProgram, "eye");
@@ -188,6 +194,13 @@ void RayTraceContext::updateGPUPixels() {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, pixels_ssbo);
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(unsigned int) * pixels.size(), pixels.data(), GL_DYNAMIC_COPY);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, pixels_ssbo);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void RayTraceContext::updateGPUTransforms() {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, transforms_ssbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Matrix4x4) * transforms.size(), transforms.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, transforms_ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
@@ -300,6 +313,15 @@ void RayTraceContext::removeTriangles(int tbegin, int tend) {
 
 std::vector<Triangle>* RayTraceContext::getTriangles() {
     return &this->triangles;
+}
+
+int RayTraceContext::addTransform(Matrix4x4* transform) {
+    this->transforms.push_back(*transform);
+    return this->transforms.size() - 1;
+}
+
+std::vector<Matrix4x4>* RayTraceContext::getTransforms() {
+    return &this->transforms;
 }
 
 void RayTraceContext::setCameraPosition(float x, float y, float z) {

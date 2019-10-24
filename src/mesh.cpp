@@ -8,6 +8,11 @@ Mesh::Mesh(RayTraceContext* rtcontext)
 {
     this->rtcontext = rtcontext;
     this->material_id = -1;
+
+    Matrix4x4 transform = Matrix4x4();
+    this->transform_id = rtcontext->addTransform(&transform);
+
+    std::cout << "New mesh created and assigned a transform id: " << transform_id << std::endl;
 }
 
 void Mesh::setVertices(float* vertices, int length) {
@@ -68,7 +73,6 @@ void Mesh::build() {
 
 
     Tree root = Tree();
-    root.transform = transform;
     root.setBoundaries(&rtcontext->getTriangles()->at(0));
     nodes.push_back(root);
     for (int i = tbegin; i < tend; i++) {
@@ -103,42 +107,53 @@ void Mesh::setMaterial(MaterialHandle* material) {
 }
 
 void Mesh::setPosition(float x, float y, float z) {
-    this->transform.setPosition(x, y, z);
+    this->getTransform()->setPosition(x, y, z);
     updateRootTransform();
 }
 
 void Mesh::move(float x, float y, float z) {
-    this->transform.move(x, y, z);
+    this->getTransform()->move(x, y, z);
     updateRootTransform();
 }
 
 void Mesh::setRotation(float x, float y, float z) {
-    this->transform.setRotation(x, y, z);
+    this->getTransform()->setRotation(x, y, z);
     updateRootTransform();
 }
 
 void Mesh::rotate(float x, float y, float z) {
-    this->transform.rotate(x, y, z);
+    this->getTransform()->rotate(x, y, z);
     updateRootTransform();
 }
 
 void Mesh::updateRootTransform() {
     if (rootIndex != -1) {
-        (*rtcontext->getNodes())[rootIndex].transform = transform;
 
-        rtcontext->getNodes()->at(rootIndex).updateTransformBoundingBox(rtcontext->getNodes());
+        int root_transform_id = (*rtcontext->getNodes())[rootIndex].transform_id;
+
+        if (root_transform_id != transform_id) {
+            std::cout << "Setting transform_parents of object " << this << std::endl;
+            (*rtcontext->getNodes())[rootIndex].transform_id = transform_id;
+            (*rtcontext->getNodes())[rootIndex].updateTransformParents(rtcontext->getNodes());
+        }
+
+        rtcontext->getNodes()->at(rootIndex).updateTransformBoundingBox(rtcontext->getNodes(), getTransform());
 
         rtcontext->updateGPUTreenodes();
+        rtcontext->updateGPUTransforms();
 
         //rtcontext->updateGPUTreenodesPartial(rootIndex, rootIndex + 1);
     }
 
+    //std::cout << "Scene root node: " << rtcontext->recoverSceneRoot() << std::endl;
+    //std::cout << "Nodes after a movement: " << std::endl;
+    //for (int i = 0; i < rtcontext->getNodes()->size(); i++) {
+    //    rtcontext->getNodes()->at(i).print(rtcontext->getNodes());
+    //    rtcontext->getNodes()->at(i).printBB();
+    //}
 
-    /*std::cout << "Nodes after a movement: " << std::endl;
-    for (int i = 0; i < rtcontext->getNodes()->size(); i++) {
-        rtcontext->getNodes()->at(i).print(rtcontext->getNodes());
-        rtcontext->getNodes()->at(i).printBB();
-        rtcontext->getNodes()->at(i).transform.print();
-    } */
+}
 
+Matrix4x4* Mesh::getTransform() {
+    return &rtcontext->getTransforms()->at(transform_id);
 }

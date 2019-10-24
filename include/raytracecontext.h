@@ -55,6 +55,11 @@ namespace RT {
 
             std::vector<Triangle>*  getTriangles();
 
+            int addTransform(Matrix4x4* transform);
+
+            std::vector<Matrix4x4>* getTransforms();
+
+
 
             // Refresh the triangles to gpu in case of resize.
             void updateGPUTriangles();
@@ -70,6 +75,8 @@ namespace RT {
 
             // Refresh all pixels of textures on the gpu.
             void updateGPUPixels();
+
+            void updateGPUTransforms();
 
             // Update part of triangles on gpu
             void updateGPUTrianglesPartial(int b, int e);
@@ -99,6 +106,7 @@ namespace RT {
             std::vector<Material> materials;
             std::vector<Texture> textures;
             std::vector<unsigned int> pixels;
+            std::vector<Matrix4x4> transforms;
 
             unsigned int shaderProgram;
             unsigned int VBO, VAO;
@@ -108,6 +116,7 @@ namespace RT {
             GLuint materials_ssbo;
             GLuint textures_ssbo;
             GLuint pixels_ssbo;
+            GLuint transforms_ssbo;
 
             GLuint eye;
             GLuint eye_dir;

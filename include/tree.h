@@ -26,11 +26,9 @@ public:
     int depth;
 
     int isObject;
-    float padding0;
+    int transform_id;
+    int transform_parent;
     float padding1;
-    float padding2;
-
-    Matrix4x4 transform;
 
 
     Tree();
@@ -42,12 +40,13 @@ public:
     void copyBoundaries(Tree* tree);
     float getSurface();
     void updateParents(std::vector<Tree>* nodes);
-    void updateTransformBoundingBox(std::vector<Tree>* nodes);
+    void updateTransformBoundingBox(std::vector<Tree>* nodes, Matrix4x4* transform);
     void setDepths(std::vector<Tree>* nodes);
 
     void balance(std::vector<Tree>* tree);
     float unionSurface(Tree* node);
     void recalculateBoundingBox(std::vector<Tree>* nodes);
+    void updateTransformParents(std::vector<Tree>* nodes);
     void printBB();
     void print(std::vector<Tree>* nodes);
 };

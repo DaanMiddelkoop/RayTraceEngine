@@ -25,6 +25,8 @@ class Mesh
         void move(float x, float y, float z);
         void rotate(float x, float y, float z);
 
+        Matrix4x4* getTransform();
+
 
 
     protected:
@@ -44,7 +46,7 @@ class Mesh
 
         RayTraceContext* rtcontext;
 
-        Matrix4x4 transform;
+        int transform_id;
 
 };
 }

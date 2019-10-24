@@ -44,11 +44,9 @@ struct Tree {
   int depth;
 
   int isObject;
-  float padding1;
-  float padding2;
-  float padding3;
-
-  mat4 transform;
+  int transform_id;
+  int transform_parent;
+  float padding0;
 };
 
 struct Ray {
@@ -95,6 +93,11 @@ layout (std430, binding = 4) buffer texture_b
 layout (std430, binding = 5) buffer pixel_b
 {
   uint pixels[];
+};
+
+layout (std430, binding = 6) buffer transform_b
+{
+  mat4 transforms[];
 };
 
 uniform vec3 eye;
@@ -210,8 +213,13 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
 
     int tree_index = treenodes[currentNode];
 
-    tm = tm * inverse(tree[tree_index].transform);
 
+
+    // If node contains a transform, apply it.
+    int transform_id = tree[tree_index].transform_id;
+    if (transform_id != -1) {
+      tm = tm * inverse(transforms[transform_id]);
+    }
 
     Ray moved_ray;
     moved_ray.origin = (tm * vec4(ray.origin.xyz, 1)).xyz;
@@ -269,13 +277,20 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
     }
 
 
+    // revert all transforms required before jumping to next node.
     if (nextNode > -1) {
       int goalDepth = tree[treenodes[nextNode]].depth;
       int currentDepth = tree[tree_index].depth;
 
       while (goalDepth <= currentDepth) {
-        tm = tree[tree_index].transform * tm;
-        tree_index = tree[tree_index].parent;
+        if (tree[tree_index].transform_id != -1) {
+          tm = transforms[tree[tree_index].transform_id] * tm;
+        }
+
+        tree_index = tree[tree_index].transform_parent;
+        if (tree_index == -1) {
+          break;
+        }
         currentDepth = tree[tree_index].depth;
       }
     }
@@ -325,6 +340,6 @@ void main()
 
     //FragColor = vec4(pos.x, pos.y, 0.0f, 1.0f);
 
-    FragColor = vec4(debugTrace(ray).xyz, 1.0);
+    FragColor = vec4(trace(ray).xyz, 1.0);
 }
 )""

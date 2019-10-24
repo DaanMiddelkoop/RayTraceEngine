@@ -18,6 +18,9 @@ Tree::Tree() {
     maxy = 0.0f;
     maxz = 0.0f;
 
+    transform_id = -1;
+    transform_parent = -1;
+
     isObject = false;
 }
 
@@ -33,7 +36,6 @@ void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
         newRoot.node2 = nodes->size() + 1;
         newRoot.parent = parent;
 
-        newRoot.transform = Matrix4x4();
         newRoot.leaf = false;
         newRoot.isObject = false;
 
@@ -275,7 +277,7 @@ void Tree::updateParents(std::vector<Tree>* nodes) {
     }
 }
 
-void Tree::updateTransformBoundingBox(std::vector<Tree>* nodes) {
+void Tree::updateTransformBoundingBox(std::vector<Tree>* nodes, Matrix4x4* transform) {
 
     if (!leaf) {
         recalculateBoundingBox(nodes);
@@ -325,7 +327,7 @@ void Tree::updateTransformBoundingBox(std::vector<Tree>* nodes) {
 
 
     float result[4];
-    transform.multiplicate(result, p[0]);
+    transform->multiplicate(result, p[0]);
 
     if (!leaf) {
         this->minx = result[0];
@@ -339,7 +341,7 @@ void Tree::updateTransformBoundingBox(std::vector<Tree>* nodes) {
 
 
         for (int i = 1; i < 8; i++) {
-            transform.multiplicate(result, p[i]);
+            transform->multiplicate(result, p[i]);
             this->minx = min(this->minx, result[0]);
             this->miny = min(this->miny, result[1]);
             this->minz = min(this->minz, result[2]);
@@ -350,7 +352,7 @@ void Tree::updateTransformBoundingBox(std::vector<Tree>* nodes) {
         }
     } else {
         for (int i = 0; i < 8; i++) {
-            transform.multiplicate(result, p[i]);
+            transform->multiplicate(result, p[i]);
             this->minx = min(this->minx, result[0]);
             this->miny = min(this->miny, result[1]);
             this->minz = min(this->minz, result[2]);
@@ -362,6 +364,30 @@ void Tree::updateTransformBoundingBox(std::vector<Tree>* nodes) {
     }
 
     updateParents(nodes);
+}
+
+void Tree::updateTransformParents(std::vector<Tree>* nodes) {
+
+    if (!leaf) {
+        if (transform_id != -1) {
+            nodes->at(node1).transform_parent = this - nodes->data();
+            nodes->at(node2).transform_parent = this - nodes->data();
+
+            std::cout << "Node detected with transform id, which is: " << this - nodes->data() << std::endl;
+
+
+        } else {
+            nodes->at(node1).transform_parent = transform_parent;
+            nodes->at(node2).transform_parent = transform_parent;
+        }
+        if (nodes->at(node1).transform_id == -1) {
+            nodes->at(node1).updateTransformParents(nodes);
+        }
+
+        if (nodes->at(node2).transform_id == -1) {
+            nodes->at(node2).updateTransformParents(nodes);
+        }
+    }
 }
 
 void Tree::print(std::vector<Tree>* nodes) {
