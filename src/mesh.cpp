@@ -130,9 +130,12 @@ void Mesh::rotate(float x, float y, float z) {
 void Mesh::updateRootTransform() {
     if (rootIndex != -1) {
 
+
         int root_transform_id = (*rtcontext->getNodes())[rootIndex].transform_id;
 
         if (root_transform_id != transform_id) {
+
+            std::cout << root_transform_id << " , " << transform_id << " , " << rootIndex <<  std::endl;
             std::cout << "Setting transform_parents of object " << this << std::endl;
             (*rtcontext->getNodes())[rootIndex].transform_id = transform_id;
             (*rtcontext->getNodes())[rootIndex].updateTransformParents(rtcontext->getNodes());

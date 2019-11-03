@@ -39,7 +39,7 @@ public:
     float getArea();
     void copyBoundaries(Tree* tree);
     float getSurface();
-    void updateParents(std::vector<Tree>* nodes);
+    int updateParents(std::vector<Tree>* nodes);
     void updateTransformBoundingBox(std::vector<Tree>* nodes, Matrix4x4* transform);
     void setDepths(std::vector<Tree>* nodes);
 
@@ -49,6 +49,10 @@ public:
     void updateTransformParents(std::vector<Tree>* nodes);
     void printBB();
     void print(std::vector<Tree>* nodes);
+
+    void reinsert(std::vector<Tree>* nodes);
+    void insertExistingNode(int node, std::vector<Tree>* nodes, int extraNode);
+    void fixTransformChildren(std::vector<Tree>* nodes, int old_parent, int new_parent);
 };
 
 #endif

@@ -374,6 +374,7 @@ void RayTraceContext::draw(Window* window) {
 }
 
 void RayTraceContext::setSceneRoot(int root) {
+    std::cout << "Scene root: " << root << std::endl;
     glUniform1i(scene_root, root);
 }
 

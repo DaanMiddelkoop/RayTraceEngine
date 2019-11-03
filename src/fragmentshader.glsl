@@ -226,6 +226,7 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
     moved_ray.dir    = (tm * vec4(ray.dir   .xyz, 0)).xyz;
 
 
+
     if (tree[tree_index].leaf == 1) {
         // Test triangle hit directly so we dont store possible triangles in way to large buffers slowing our stuff down, also less branching and ****
         int tr_id = tree[tree_index].leaf_id;
@@ -296,6 +297,7 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
     }
 
   }
+
   return triangle_id;
 }
 
@@ -308,7 +310,7 @@ vec3 debugTrace(Ray ray) {
   if (tr == -1) {
     return vec3(1, 1, 1);
   }
-  return vec3(float(t) / 25.5, float(tr) / 255, 0.0);
+  return vec3(float(tr) / 255, 0.0, 0.0);
 }
 
 vec3 trace(Ray ray) {

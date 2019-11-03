@@ -46,7 +46,7 @@
 	"rtwindow.h"
 	"raytracecontext.h"
 
-1571958256 source:/home/daan/projects/RayTraceEngine/src/mesh.cpp
+1572787032 source:/home/daan/projects/RayTraceEngine/src/mesh.cpp
 	<iostream>
 	"mesh.h"
 	<vector>
@@ -72,7 +72,7 @@
 	<glad/glad.h>
 	<GLFW/glfw3.h>
 
-1571958219 source:/home/daan/projects/RayTraceEngine/src/raytracecontext.cpp
+1572785097 source:/home/daan/projects/RayTraceEngine/src/raytracecontext.cpp
 	<iostream>
 	"raytracecontext.h"
 	<string>
@@ -93,9 +93,9 @@
 
 1570468606 /home/daan/projects/RayTraceEngine/src/vertexshader.glsl
 
-1571951290 /home/daan/projects/RayTraceEngine/src/fragmentshader.glsl
+1572789727 /home/daan/projects/RayTraceEngine/src/fragmentshader.glsl
 
-1571948051 /home/daan/projects/RayTraceEngine/include/tree.h
+1572791459 /home/daan/projects/RayTraceEngine/include/tree.h
 	<algorithm>
 	<vector>
 	"Triangle.h"
@@ -112,7 +112,7 @@
 	"Triangle.h"
 	<algorithm>
 
-1571956313 source:/home/daan/projects/RayTraceEngine/src/tree.cpp
+1572791638 source:/home/daan/projects/RayTraceEngine/src/tree.cpp
 	<iostream>
 	"tree.h"
 
