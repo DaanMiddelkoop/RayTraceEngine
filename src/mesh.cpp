@@ -12,8 +12,6 @@ Mesh::Mesh(RayTraceContext* rtcontext)
     Matrix4x4 transform = Matrix4x4();
     this->transform_id = rtcontext->addTransform(&transform);
     rtcontext->updateGPUTransforms();
-
-    std::cout << "New mesh created and assigned a transform id: " << transform_id << std::endl;
 }
 
 void Mesh::setVertices(float* vertices, int length) {
@@ -45,11 +43,8 @@ void Mesh::setVertices(float* vertices, int length) {
 }
 
 void Mesh::setTriangles(std::vector<Triangle>* triangles) {
-
-    std::cout << "setTriangles size: " << triangles->size() << "\n";
     this->tbegin = rtcontext->addTriangles(triangles);
     this->tend = tbegin + triangles->size();
-
 }
 
 void Mesh::setUVCoords(float* coord, int length) {
@@ -65,38 +60,82 @@ void Mesh::setUVCoords(float* coord, int length) {
     }
 }
 
+int Mesh::createRootNode() {
+    Tree node = Tree();
+    node.leaf = true;
+    node.leaf_id = -1;
+    rtcontext->getNodes()->push_back(node);
+    return rtcontext->getNodes()->size() - 1;
+}
+
 void Mesh::build() {
-    // Remove all of the
+
+    std::vector<Tree>* nodes = rtcontext->getNodes();
+    nodes->reserve(nodes->size() + tend - tbegin);
+
+    if (rootIndex != -1) {
+        // Should first destroy the original model.
 
 
-    std::vector<Tree> nodes = std::vector<Tree>(0);
-    nodes.reserve((tend - tbegin) * 5);
-
-
-    Tree root = Tree();
-    root.setBoundaries(&rtcontext->getTriangles()->at(0));
-    nodes.push_back(root);
-    for (int i = tbegin; i < tend; i++) {
-        if (i % 10000 == 0) {
-            std::cout << "Insert node " << i << " out of " << (tend - tbegin) << "\n";
-        }
-
-        // Update triangle material.
-        rtcontext->getTriangles()->at(i).material = material_id;
-
-        Tree node = Tree();
-        node.leaf_id = i;
-        node.setBoundaries(&rtcontext->getTriangles()->at(i));
-
-
-
-        nodes[0].insertNode(&nodes, 0, node);
+        // Falling back to just setting it to an empty leaf.
+        nodes->at(rootIndex).leaf = true;
+        nodes->at(rootIndex).leaf_id = -1;
 
     }
 
-    nodes[0].isObject = true;
+    // There are no triangles to insert.
+    if (tend - tbegin == 0) {
+        std::cout << "Warning: Tried building an empty triangle" << std::endl;
+        return;
+    }
 
-    this->rootIndex = rtcontext->addNode(&nodes);
+    if (rootIndex == -1) {
+        // Request new root node for this object.
+        rootIndex = createRootNode();
+    }
+
+    nodes->at(rootIndex).isObject = false;
+
+    // giving the root node the first triangle.
+    nodes->at(rootIndex).leaf_id = tbegin;
+    nodes->at(rootIndex).setBoundaries(&rtcontext->getTriangles()->at(tbegin));
+
+
+    for (int i = tbegin + 1; i < tend; i++) {
+        if (i % 1000 == 0) {
+            std::cout << "Insert node " << i << " out of " << (tend - tbegin) << "\n";
+        }
+
+
+        // Update triangle material.
+
+        rtcontext->getTriangles()->at(i).material = material_id;
+
+        Tree node = Tree();
+        node.leaf = true;
+        node.leaf_id = i;
+        node.setBoundaries(&rtcontext->getTriangles()->at(i));
+        nodes->push_back(node);
+        nodes->push_back(Tree());
+
+        nodes->at(rootIndex).insertNode(nodes, nodes->size() - 2, nodes->size() - 1);
+
+        if (nodes->at(nodes->size() - 1).parent == -1) {
+            rootIndex = nodes->size() - 1;
+        }
+    }
+
+    nodes->at(rootIndex).isObject = true;
+    nodes->push_back(Tree());
+
+    int sceneRoot = rtcontext->recoverSceneRoot();
+
+    nodes->at(sceneRoot).insertNode(nodes, rootIndex, nodes->size() - 1);
+    nodes->at(rootIndex).setDepths(nodes);
+
+    rtcontext->recoverSceneRoot();
+    rtcontext->updateGPUTreenodes();
+    rtcontext->updateGPUTriangles();
 }
 
 void Mesh::update() {
@@ -129,23 +168,19 @@ void Mesh::rotate(float x, float y, float z) {
 
 void Mesh::updateRootTransform() {
     if (rootIndex != -1) {
-
-
-        int root_transform_id = (*rtcontext->getNodes())[rootIndex].transform_id;
+        int root_transform_id = rtcontext->getNodes()->at(rootIndex).transform_id;
 
         if (root_transform_id != transform_id) {
-
-            std::cout << root_transform_id << " , " << transform_id << " , " << rootIndex <<  std::endl;
-            std::cout << "Setting transform_parents of object " << this << std::endl;
-            (*rtcontext->getNodes())[rootIndex].transform_id = transform_id;
-            (*rtcontext->getNodes())[rootIndex].updateTransformParents(rtcontext->getNodes());
+            rtcontext->getNodes()->at(rootIndex).transform_id = transform_id;
+            getTransform()->node_id = rootIndex;
             rtcontext->updateGPUTreenodes();
         }
 
         rtcontext->getNodes()->at(rootIndex).updateTransformBoundingBox(rtcontext->getNodes(), getTransform());
 
         rtcontext->updateGPUTransform(transform_id);
-        rtcontext->updateGPUTreenodesPath(rootIndex);
+        rtcontext->updateGPUTreenodes();
+        //rtcontext->updateGPUTreenodesPath(rootIndex);
     }
 
     //std::cout << "Scene root node: " << rtcontext->recoverSceneRoot() << std::endl;

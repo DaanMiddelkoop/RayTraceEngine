@@ -12,10 +12,14 @@ Matrix4x4::Matrix4x4()
             data[i][j] = i == j ? 1 : 0;
         }
     }
+    parent_id = -1;
+    node_id = -1;
 }
 
 Matrix4x4::Matrix4x4(float input[16]) {
     setData(input);
+    parent_id = -1;
+    node_id = -1;
 }
 
 void Matrix4x4::setData(float* input)
@@ -31,6 +35,9 @@ Matrix4x4 Matrix4x4::multiplicate(Matrix4x4* other) {
             result.data[x][y] = multiplicate_row_col(other, y, x);
         }
     }
+    result.node_id = node_id;
+    result.parent_id = parent_id;
+
     return result;
 }
 
@@ -96,7 +103,12 @@ void Matrix4x4::setRotation(float x, float y, float z) {
     Matrix4x4 z_axis = Matrix4x4(zs);
 
     Matrix4x4 xy = x_axis.multiplicate(&y_axis);
+
+    int n_id = node_id;
+    int p_id = parent_id;
     *this = xy.multiplicate(&z_axis);
+    node_id = n_id;
+    parent_id = p_id;
 }
 
 void Matrix4x4::setPosition(float x, float y, float z) {

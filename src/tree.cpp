@@ -19,107 +19,55 @@ Tree::Tree() {
     maxz = 0.0f;
 
     transform_id = -1;
-    transform_parent = -1;
 
     isObject = false;
 }
 
-void Tree::insertNode(std::vector<Tree>* nodes, int own_id, Tree node) {
-    if (isObject) {
-        std::cout << "founnd object leaf" << std::endl;
-        printBB();
+int Tree::getOwnId(std::vector<Tree>* nodes) {
+    return this - nodes->data();
+}
 
-        Tree newRoot = (*this);
-        newRoot.extendNode(node);
+void Tree::insertNode(std::vector<Tree>* nodes, int leafNode, int extraNode) {
 
-        newRoot.node1 = own_id;
-        newRoot.node2 = nodes->size() + 1;
-        newRoot.parent = parent;
+    if (isObject || leaf) {
+        // prepare extraNode to be a new parent to both this node and the inserted node.
+        nodes->at(extraNode).leaf = false;
+        nodes->at(extraNode).isObject = false;
+        nodes->at(extraNode).parent = parent;
+        nodes->at(extraNode).depth = depth;
+        nodes->at(extraNode).node1 = leafNode;
+        nodes->at(extraNode).node2 = getOwnId(nodes);
 
-        newRoot.leaf = false;
-        newRoot.isObject = false;
-        newRoot.transform_id = -1;
-
-        // Fix reference from this nodes parent to newRoot;
-         if (parent != -1) {
-            if (nodes->at(parent).node1 == (this - nodes->data())) {
-                nodes->at(parent).node1 = nodes->size();
-            } else if (nodes->at(parent).node2 == (this - nodes->data())) {
-                nodes->at(parent).node2 = nodes->size();
+        // create link from the original parent to the new "inbetween" node.
+        if (parent != -1) {
+            if (nodes->at(parent).node1 == getOwnId(nodes)) {
+                nodes->at(parent).node1 = extraNode;
             } else {
-                std::cout << "BIG ERROR" << std::endl;
+                nodes->at(parent).node2 = extraNode;
             }
-
-            newRoot.transform_parent = nodes->at(parent).transform_parent;
-        } else {
-            newRoot.transform_parent = -1;
         }
 
+        parent = extraNode;
+        nodes->at(leafNode).parent = extraNode;
 
-        std::cout << "Setting depths of node " << node1 << std::endl;
+        nodes->at(extraNode).recalculateBoundingBox(nodes);
+        nodes->at(extraNode).setDepths(nodes);
 
-        nodes->at(node1).setDepths(nodes);
-
-        std::cout << "Setting depths of node " << node2 << std::endl;
-        nodes->at(node2).setDepths(nodes);
-
-        std::cout << "finished fixing depths " << std::endl;
-
-
-
-        node.parent = nodes->size();
-        parent = nodes->size();
-
-        nodes->push_back(newRoot);
-        nodes->push_back(node);
-
-
-        newRoot.setDepths(nodes);
-
-        return;
-    }
-
-
-    if (leaf) {
-        if (leaf_id == -1) {
-            *this = node;
-        } else {
-            leaf = false;
-            // This node is a leaf, turn it into a node instead.
-            Tree child1 = Tree();
-            child1.leaf = true;
-            child1.leaf_id = leaf_id;
-            child1.copyBoundaries(this);
-            child1.parent = own_id;
-            child1.depth = depth + 1;
-            node.depth = depth + 1;
-
-            leaf_id = 0;
-
-            node.parent = own_id;
-
-            nodes->push_back(node);
-            node1 = nodes->size() - 1;
-
-            nodes->push_back(child1);
-            node2 = nodes->size() - 1;
-        }
-
-         extendNode(node);
     } else {
-        extendNode(node);
-        // Select which child the new node should be added to.
+        extendNode(nodes->at(leafNode));
 
-        float a1 = nodes->at(node1).areaMetric(&node);
-        float a2 = nodes->at(node2).areaMetric(&node);
+        //Select which child the new node should be added to.
+
+        float a1 = nodes->at(node1).areaMetric(&nodes->at(leafNode));
+        float a2 = nodes->at(node2).areaMetric(&nodes->at(leafNode));
 
 
         if (a1 < a2) {
-            (*nodes)[node1].insertNode(nodes, node1, node);
+            nodes->at(node1).insertNode(nodes, leafNode, extraNode);
         } else {
-            (*nodes)[node2].insertNode(nodes, node2, node);
+            nodes->at(node2).insertNode(nodes, leafNode, extraNode);
         }
-        balance(nodes);
+        balanceNodes(nodes);
 
     }
 }
@@ -137,7 +85,7 @@ void Tree::setDepths(std::vector<Tree>* nodes) {
     }
 }
 
-void Tree::balance(std::vector<Tree>* nodes) {
+void Tree::balanceNodes(std::vector<Tree>* nodes) {
     // Four possible rotations:
     // http://box2d.org/files/GDC2019/ErinCatto_DynamicBVH_GDC2019.pdf rotations part
 
@@ -218,6 +166,14 @@ void Tree::balance(std::vector<Tree>* nodes) {
             nodes->at(nodes->at(node1).node1).parent = node1;
             nodes->at(node2).parent = this - nodes->data();
         }
+    }
+}
+
+void Tree::balance(std::vector<Tree>* nodes) {
+    balanceNodes(nodes);
+    if (!leaf) {
+        nodes->at(node1).balance(nodes);
+        nodes->at(node2).balance(nodes);
     }
 }
 
@@ -312,16 +268,11 @@ float Tree::getArea() {
     return max(maxx - minx, 0.0001f) * max(maxy - miny, 0.0001f) * max(maxz - minz, 0.0001f);
 }
 
-// Also returns the tree root.
-int Tree::updateParents(std::vector<Tree>* nodes) {
-    if (parent != -1) {
-        Tree* p = &nodes->at(parent);
-        p->recalculateBoundingBox(nodes);
-        return p->updateParents(nodes);
-    }
+void Tree::updateParents(std::vector<Tree>* nodes) {
+    recalculateBoundingBox(nodes);
 
-    if (parent == -1) {
-        return this - nodes->data();
+    if (parent != -1) {
+        nodes->at(parent).recalculateBoundingBox(nodes);
     }
 }
 
@@ -329,7 +280,6 @@ int Tree::updateParents(std::vector<Tree>* nodes) {
 void Tree::reinsert(std::vector<Tree>* nodes) {
     // remove from the tree.
     //std::cout << "start with the reinsert " << std::endl;
-
 
     if (parent != -1) {
 
@@ -347,96 +297,31 @@ void Tree::reinsert(std::vector<Tree>* nodes) {
             sibbling = nodes->at(parent).node1;
         }
 
+        nodes->at(sibbling).parent = nodes->at(parent).parent;
         if (nodes->at(parent).parent != -1) {
             if (nodes->at(nodes->at(parent).parent).node1 == parent) {
                 nodes->at(nodes->at(parent).parent).node1 = sibbling;
             } else {
                 nodes->at(nodes->at(parent).parent).node2 = sibbling;
             }
+
+
+            nodes->at(nodes->at(sibbling).parent).updateParents(nodes);
         }
 
-
-        nodes->at(sibbling).parent = nodes->at(parent).parent;
-
-        //std::cout << "updating parents..." << std::endl;
-        // Update old bounding boxes.
-        int root = nodes->at(sibbling).updateParents(nodes);
-        //std::cout << "root: " << root << std::endl;
-
-        //std::cout << "Removed self" << std::endl;
-
-        //std::cout << "reinserting node: " << this - nodes->data() << " with sibbling: " << sibbling << " and parent: " << parent << std::endl;
-        // Reinsert into tree.
-        nodes->at(root).insertExistingNode(this - nodes->data(), nodes, parent);
-    }
-
-}
-
-void Tree::fixTransformChildren(std::vector<Tree>* nodes, int old_parent, int new_parent) {
-    if (transform_parent == old_parent) {
-        transform_parent = new_parent;
-    }
-
-    nodes->at(node1).fixTransformChildren(nodes, old_parent, new_parent);
-    nodes->at(node2).fixTransformChildren(nodes, old_parent, new_parent);
-}
-
-void Tree::insertExistingNode(int node, std::vector<Tree>* nodes, int extraNode) {
-    if (leaf || isObject) {
-        Tree* newRoot = &nodes->at(extraNode);
-        *newRoot = (*this);
-        newRoot->extendNode(nodes->at(node));
-
-        newRoot->node1 = this - nodes->data();
-        newRoot->node2 = node;
-        newRoot->parent = parent;
-
-        newRoot->leaf = false;
-        newRoot->isObject = false;
-        newRoot->transform_id = -1;
-
-        // Fix reference from this nodes parent to newRoot;
-         if (parent != -1) {
-            if (nodes->at(parent).node1 == (this - nodes->data())) {
-                nodes->at(parent).node1 = extraNode;
-            } else if (nodes->at(parent).node2 == (this - nodes->data())) {
-                nodes->at(parent).node2 = extraNode;
-            } else {
-                std::cout << "BIG ERROR" << std::endl;
-            }
-
-
-            newRoot->transform_parent = nodes->at(parent).transform_parent;
-        } else {
-            newRoot->transform_parent = -1;
+        int root = sibbling;
+        while (nodes->at(root).parent != -1) {
+            root = nodes->at(root).parent;
         }
+        nodes->at(sibbling).setDepths(nodes);
 
-
-        nodes->at(node).parent = extraNode;
-        parent = extraNode;
-
-        newRoot->setDepths(nodes);
-
-        return;
-
-
-
-
-    } else {
-        extendNode(nodes->at(node));
-        float a1 = nodes->at(node1).areaMetric(&nodes->at(node));
-        float a2 = nodes->at(node2).areaMetric(&nodes->at(node));
-
-
-        if (a1 < a2) {
-            (*nodes)[node1].insertExistingNode(node, nodes, extraNode);
-        } else {
-            (*nodes)[node2].insertExistingNode(node, nodes, extraNode);
-        }
+        nodes->at(root).insertNode(nodes, getOwnId(nodes), parent);
     }
+
 }
 
 void Tree::updateTransformBoundingBox(std::vector<Tree>* nodes, Matrix4x4* transform) {
+
 
     if (!leaf) {
         recalculateBoundingBox(nodes);
@@ -524,33 +409,9 @@ void Tree::updateTransformBoundingBox(std::vector<Tree>* nodes, Matrix4x4* trans
     reinsert(nodes);
 }
 
-void Tree::updateTransformParents(std::vector<Tree>* nodes) {
-
-    if (!leaf) {
-        if (transform_id != -1) {
-            nodes->at(node1).transform_parent = this - nodes->data();
-            nodes->at(node2).transform_parent = this - nodes->data();
-
-            std::cout << "Node detected with transform id, which is: " << this - nodes->data() << std::endl;
-
-
-        } else {
-            nodes->at(node1).transform_parent = transform_parent;
-            nodes->at(node2).transform_parent = transform_parent;
-        }
-        if (nodes->at(node1).transform_id == -1) {
-            nodes->at(node1).updateTransformParents(nodes);
-        }
-
-        if (nodes->at(node2).transform_id == -1) {
-            nodes->at(node2).updateTransformParents(nodes);
-        }
-    }
-}
-
 void Tree::print(std::vector<Tree>* nodes) {
     std::cout << "Node " << this - nodes->data() << " --------------------------" << std::endl;
-    std::cout << "parent" << parent << " node1 " << node1 << " node2 " << node2 << std::endl;
+    std::cout << "parent" << parent << " node1 " << node1 << " node2 " << node2 << " leaf id " << leaf_id << std::endl;
     std::cout << "Depth of node: " << depth << std::endl;
 }
 

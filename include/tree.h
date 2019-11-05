@@ -32,27 +32,27 @@ public:
 
 
     Tree();
-    void insertNode(std::vector<Tree>* nodes, int parent, Tree node);
+    int getOwnId(std::vector<Tree>* nodes);
+
+    void insertNode(std::vector<Tree>* nodes, int newNode, int extraNode);
     void extendNode(Tree node);
     float areaMetric(Tree* node);
     void setBoundaries(Triangle* t);
     float getArea();
     void copyBoundaries(Tree* tree);
     float getSurface();
-    int updateParents(std::vector<Tree>* nodes);
+    void updateParents(std::vector<Tree>* nodes);
     void updateTransformBoundingBox(std::vector<Tree>* nodes, Matrix4x4* transform);
     void setDepths(std::vector<Tree>* nodes);
 
-    void balance(std::vector<Tree>* tree);
+    void balance(std::vector<Tree>* nodes);
+    void balanceNodes(std::vector<Tree>* nodes);
     float unionSurface(Tree* node);
     void recalculateBoundingBox(std::vector<Tree>* nodes);
-    void updateTransformParents(std::vector<Tree>* nodes);
     void printBB();
     void print(std::vector<Tree>* nodes);
 
     void reinsert(std::vector<Tree>* nodes);
-    void insertExistingNode(int node, std::vector<Tree>* nodes, int extraNode);
-    void fixTransformChildren(std::vector<Tree>* nodes, int old_parent, int new_parent);
 };
 
 #endif

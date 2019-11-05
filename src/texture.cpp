@@ -54,6 +54,7 @@ void TextureHandle::setData(int width, int height, uint8_t* data) {
 
     rtcontext->updateGPUTextures();
     rtcontext->updateGPUPixels();
+    std::cout << "Updating gpu textures and pixels" << std::endl;
 }
 
 int TextureHandle::getWidth() {

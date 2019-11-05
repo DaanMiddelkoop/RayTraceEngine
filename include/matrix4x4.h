@@ -22,6 +22,11 @@ class Matrix4x4
         // data[culumn][row];
         float data[4][4];
 
+        int node_id;
+        int parent_id;
+        float padding0;
+        float padding1;
+
     protected:
 
     private:

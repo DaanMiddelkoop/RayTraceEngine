@@ -68,6 +68,15 @@ struct Texture {
   float padding1;
 };
 
+struct Transform {
+  mat4 m;
+
+  int node_id;
+  int parent_id;
+  float padding0;
+  float padding1;
+};
+
 out vec4 FragColor;
 
 layout (std430, binding = 1) buffer triangle_b
@@ -97,7 +106,7 @@ layout (std430, binding = 5) buffer pixel_b
 
 layout (std430, binding = 6) buffer transform_b
 {
-  mat4 transforms[];
+  Transform transforms[];
 };
 
 uniform vec3 eye;
@@ -194,6 +203,7 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
   int nextNode = 0;
 
   int triangle_id = -1;
+  int currentTransform = -1;
 
   // manually check for hit with root.
   float t_stuff;
@@ -218,7 +228,8 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
     // If node contains a transform, apply it.
     int transform_id = tree[tree_index].transform_id;
     if (transform_id != -1) {
-      tm = tm * inverse(transforms[transform_id]);
+      currentTransform = transform_id;
+      tm = tm * inverse(transforms[transform_id].m);
     }
 
     Ray moved_ray;
@@ -250,19 +261,27 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
       int node1 = tree[tree_index].node1;
       int node2 = tree[tree_index].node2;
 
-      float boxdist;
+      float boxdist1;
+      float boxdist2;
 
-      bool hit1 = AABBHit(moved_ray, tree[node1].minpos, tree[node1].maxpos, boxdist);
-      hit1 = hit1 && boxdist < t;
+      bool hit1 = AABBHit(moved_ray, tree[node1].minpos, tree[node1].maxpos, boxdist1);
+      hit1 = hit1 && boxdist1 < t;
 
-      bool hit2 = AABBHit(moved_ray, tree[node2].minpos, tree[node2].maxpos, boxdist);
-      hit2 = hit2 && boxdist < t;
+      bool hit2 = AABBHit(moved_ray, tree[node2].minpos, tree[node2].maxpos, boxdist2);
+      hit2 = hit2 && boxdist2 < t;
 
       if (hit1) {
-        treenodes[currentNode] = node1;
         if (hit2) {
-          treenodes[currentNode + 1] = node2;
+          if (boxdist1 < boxdist2) {
+            treenodes[currentNode] = node2;
+            treenodes[currentNode + 1] = node1;
+          } else {
+            treenodes[currentNode] = node1;
+            treenodes[currentNode + 1] = node2;
+          }
           nextNode = currentNode + 1;
+        } else {
+          treenodes[currentNode] = node1;
         }
       }
       else
@@ -279,25 +298,39 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
 
 
     // revert all transforms required before jumping to next node.
-    if (nextNode > -1) {
+    // if (nextNode > -1) {
+    //   int goalDepth = tree[treenodes[nextNode]].depth;
+    //   int currentDepth = tree[tree_index].depth;
+    //
+    //   while (goalDepth <= currentDepth) {
+    //     if (tree[tree_index].transform_id != -1) {
+    //       tm = transforms[tree[tree_index].transform_id] * tm;
+    //     }
+    //
+    //     tree_index = tree[tree_index].transform_parent;
+    //     if (tree_index == -1) {
+    //       break;
+    //     }
+    //     currentDepth = tree[tree_index].depth;
+    //   }
+    // }
+
+    if (nextNode > -1 && currentTransform != -1) {
       int goalDepth = tree[treenodes[nextNode]].depth;
-      int currentDepth = tree[tree_index].depth;
+      int transformDepth = tree[transforms[currentTransform].node_id].depth;
+      while (goalDepth <= transformDepth) {
+        tm = transforms[currentTransform].m * tm;
 
-      while (goalDepth <= currentDepth) {
-        if (tree[tree_index].transform_id != -1) {
-          tm = transforms[tree[tree_index].transform_id] * tm;
-        }
-
-        tree_index = tree[tree_index].transform_parent;
-        if (tree_index == -1) {
+        currentTransform = transforms[currentTransform].parent_id;
+        if (currentTransform == -1) {
           break;
         }
-        currentDepth = tree[tree_index].depth;
+        transformDepth = tree[transforms[currentTransform].node_id].depth;
       }
     }
 
   }
-
+  return maxTreenodes;
   return triangle_id;
 }
 
@@ -340,8 +373,6 @@ void main()
     ray.origin = eye;
     ray.dir = normalize(dir);
 
-    //FragColor = vec4(pos.x, pos.y, 0.0f, 1.0f);
-
-    FragColor = vec4(trace(ray).xyz, 1.0);
+    FragColor = vec4(debugTrace(ray).xyz, 1.0);
 }
 )""

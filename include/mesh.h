@@ -18,6 +18,7 @@ class Mesh
         void build();
         void update();
         void setMaterial(MaterialHandle* material);
+        int createRootNode();
 
         void setPosition(float x, float y, float z);
         void setRotation(float x, float y, float z);
@@ -28,6 +29,7 @@ class Mesh
         Matrix4x4* getTransform();
 
 
+        int rootIndex = -1;
 
     protected:
 
@@ -38,7 +40,6 @@ class Mesh
         int tbegin;
         int tend;
 
-        int rootIndex = -1;
 
         int material_id;
 
