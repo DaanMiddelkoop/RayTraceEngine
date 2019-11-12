@@ -79,3 +79,8 @@ RayTraceContext* RT::createWorld()
 
     return &rtcontexts.back();
 }
+
+
+void RT::setKeyCallBack(Window* window, void (*callback) (GLFWwindow*, int, int, int, int)) {
+    glfwSetKeyCallback(window->glwindow, callback);
+}

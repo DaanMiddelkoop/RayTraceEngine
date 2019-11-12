@@ -44,6 +44,4 @@ class TextureHandle
 
 }
 
-#warning "TEST";
-
 #endif // TEXTURE_H

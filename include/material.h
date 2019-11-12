@@ -16,8 +16,7 @@ namespace RT {
         float color_tint_green;
         float color_tint_blue;
 
-        public:
-            Material();
+        Material();
 
         protected:
 

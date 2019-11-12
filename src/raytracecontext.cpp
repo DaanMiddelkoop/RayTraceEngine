@@ -391,3 +391,4 @@ int RayTraceContext::recoverSceneRoot() {
     return sceneroot;
 }
 
+

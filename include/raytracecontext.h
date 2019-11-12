@@ -99,6 +99,10 @@ namespace RT {
 
             int recoverSceneRoot();
 
+            void checkTreeValidity();
+
+            void setSceneRoot(int root);
+
 
 
         protected:
@@ -130,7 +134,6 @@ namespace RT {
 
             GLuint scene_root;
 
-            void setSceneRoot(int root);
     };
 }
 

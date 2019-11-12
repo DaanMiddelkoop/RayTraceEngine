@@ -395,6 +395,8 @@ void Tree::updateTransformBoundingBox(std::vector<Tree>* nodes, Matrix4x4* trans
             this->maxz = max(this->maxz, result[2]);
         }
     } else {
+
+
         for (int i = 0; i < 8; i++) {
             transform->multiplicate(result, p[i]);
             this->minx = min(this->minx, result[0]);

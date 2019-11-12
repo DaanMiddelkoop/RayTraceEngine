@@ -170,9 +170,11 @@ void Mesh::updateRootTransform() {
     if (rootIndex != -1) {
         int root_transform_id = rtcontext->getNodes()->at(rootIndex).transform_id;
 
+        rtcontext->getNodes()->at(rootIndex).transform_id = transform_id;
+        getTransform()->node_id = rootIndex;
+
+
         if (root_transform_id != transform_id) {
-            rtcontext->getNodes()->at(rootIndex).transform_id = transform_id;
-            getTransform()->node_id = rootIndex;
             rtcontext->updateGPUTreenodes();
         }
 
@@ -180,6 +182,13 @@ void Mesh::updateRootTransform() {
 
         rtcontext->updateGPUTransform(transform_id);
         rtcontext->updateGPUTreenodes();
+
+        int sn = rootIndex;
+
+        while (rtcontext->getNodes()->at(sn).parent != -1) {
+            sn = rtcontext->getNodes()->at(sn).parent;
+        }
+        rtcontext->setSceneRoot(sn);
         //rtcontext->updateGPUTreenodesPath(rootIndex);
     }
 

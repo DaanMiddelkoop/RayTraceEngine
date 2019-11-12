@@ -72,6 +72,7 @@
 		<Unit filename="include/rtwindow.h" />
 		<Unit filename="include/texture.h" />
 		<Unit filename="include/tree.h" />
+		<Unit filename="include/treevisualiser.h" />
 		<Unit filename="include/vertex.h" />
 		<Unit filename="src/Triangle.cpp" />
 		<Unit filename="src/fragmentshader.glsl" />
@@ -88,6 +89,7 @@
 		<Unit filename="src/rtobject.cpp" />
 		<Unit filename="src/texture.cpp" />
 		<Unit filename="src/tree.cpp" />
+		<Unit filename="src/treevisualiser.cpp" />
 		<Unit filename="src/vertex.cpp" />
 		<Unit filename="src/vertexshader.glsl" />
 		<Extensions>

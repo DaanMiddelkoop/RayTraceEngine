@@ -173,7 +173,7 @@ bool TriangleHit(Ray ray, Triangle tr, out float t, out float u, out float v) {
   return true;
 }
 
-bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax, out float tmin) {
+bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax, out float tmin, out float tmax) {
   vec3 invD = 1.0 / ray.dir;
 	vec3 t0s = (aabbmin - ray.origin) * invD;
 	vec3 t1s = (aabbmax - ray.origin) * invD;
@@ -182,14 +182,14 @@ bool AABBHit(Ray ray, vec3 aabbmin, vec3 aabbmax, out float tmin) {
 	vec3 tbigger  = max(t0s, t1s);
 
 	tmin = max(tsmaller.x, max(tsmaller.y, tsmaller.z));
-	float tmax = min(tbigger.x, min(tbigger.y, tbigger.z));
+	tmax = min(tbigger.x, min(tbigger.y, tbigger.z));
 
 	return (tmin <= tmax);
 }
 
 
 // Triangle hit, -1 for miss
-int traverseTree(Ray ray, out float t, out float u, out float v) {
+int traverseTree(Ray ray, out float t, out float u, out float v, bool debug) {
   int treenodes[25];
 
   mat4 tm = mat4(1.0, 0.0, 0.0, 0.0,
@@ -207,7 +207,7 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
 
   // manually check for hit with root.
   float t_stuff;
-  if (AABBHit(ray, tree[scene_root].minpos, tree[scene_root].maxpos, t_stuff)) {
+  if (AABBHit(ray, tree[scene_root].minpos, tree[scene_root].maxpos, t_stuff, t_stuff)) {
     treenodes[0] = scene_root;
   } else {
     return -1;
@@ -263,12 +263,13 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
 
       float boxdist1;
       float boxdist2;
+      float maxdist;
 
-      bool hit1 = AABBHit(moved_ray, tree[node1].minpos, tree[node1].maxpos, boxdist1);
-      hit1 = hit1 && boxdist1 < t;
+      bool hit1 = AABBHit(moved_ray, tree[node1].minpos, tree[node1].maxpos, boxdist1, maxdist);
+      hit1 = hit1 && maxdist > 0 && boxdist1 < t;
 
-      bool hit2 = AABBHit(moved_ray, tree[node2].minpos, tree[node2].maxpos, boxdist2);
-      hit2 = hit2 && boxdist2 < t;
+      bool hit2 = AABBHit(moved_ray, tree[node2].minpos, tree[node2].maxpos, boxdist2, maxdist);
+      hit2 = hit2  && maxdist > 0 && boxdist2 < t;
 
       if (hit1) {
         if (hit2) {
@@ -296,25 +297,6 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
       }
     }
 
-
-    // revert all transforms required before jumping to next node.
-    // if (nextNode > -1) {
-    //   int goalDepth = tree[treenodes[nextNode]].depth;
-    //   int currentDepth = tree[tree_index].depth;
-    //
-    //   while (goalDepth <= currentDepth) {
-    //     if (tree[tree_index].transform_id != -1) {
-    //       tm = transforms[tree[tree_index].transform_id] * tm;
-    //     }
-    //
-    //     tree_index = tree[tree_index].transform_parent;
-    //     if (tree_index == -1) {
-    //       break;
-    //     }
-    //     currentDepth = tree[tree_index].depth;
-    //   }
-    // }
-
     if (nextNode > -1 && currentTransform != -1) {
       int goalDepth = tree[treenodes[nextNode]].depth;
       int transformDepth = tree[transforms[currentTransform].node_id].depth;
@@ -323,14 +305,15 @@ int traverseTree(Ray ray, out float t, out float u, out float v) {
 
         currentTransform = transforms[currentTransform].parent_id;
         if (currentTransform == -1) {
+
           break;
         }
+
         transformDepth = tree[transforms[currentTransform].node_id].depth;
       }
     }
 
   }
-  return maxTreenodes;
   return triangle_id;
 }
 
@@ -339,7 +322,7 @@ vec3 debugTrace(Ray ray) {
   //u = 0;
   //v = 0;
 
-  int tr = traverseTree(ray, t, u, v);
+  int tr = traverseTree(ray, t, u, v, true);
   if (tr == -1) {
     return vec3(1, 1, 1);
   }
@@ -349,7 +332,7 @@ vec3 debugTrace(Ray ray) {
 vec3 trace(Ray ray) {
   float t, u, v;
 
-  int tr = traverseTree(ray, t, u, v);
+  int tr = traverseTree(ray, t, u, v, false);
   if (tr == -1) {
     return vec3(1, 1, 1);
   }
@@ -373,6 +356,7 @@ void main()
     ray.origin = eye;
     ray.dir = normalize(dir);
 
-    FragColor = vec4(debugTrace(ray).xyz, 1.0);
+    FragColor = vec4(trace(ray).xyz, 1.0);
+    //FragColor = (vec4(debugTrace(ray).xyz, 1.0) * 0.8 + vec4(trace(ray).xyz, 1.0) * 0.2);
 }
 )""
